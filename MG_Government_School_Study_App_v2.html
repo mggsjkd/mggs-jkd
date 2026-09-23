@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mahatma Gandhi Government School — Study App</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#172033}
+header{background:linear-gradient(135deg,#5b42f3,#8b5cf6);color:white;padding:28px 20px 34px;border-radius:0 0 28px 28px}
+header small{opacity:.85}header h1{font-size:30px;margin:8px 0}.wrap{max-width:760px;margin:auto}
+.search{margin-top:18px;background:white;border-radius:16px;padding:14px;color:#777;box-shadow:0 8px 24px #0001}
+main{padding:22px 16px 90px}.title{font-size:24px;margin:8px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{background:white;border-radius:20px;padding:20px;box-shadow:0 5px 18px #17203312;cursor:pointer;transition:.15s}
+.card:hover{transform:translateY(-2px)}.icon{font-size:34px}.card h3{font-size:20px;margin:10px 0 5px}.muted{color:#697386}
+.row{display:flex;gap:10px;flex-wrap:wrap}.pill{padding:10px 14px;border-radius:30px;background:#ede9fe;color:#4c1d95;font-weight:700}
+button{border:0;border-radius:14px;padding:13px 16px;font-size:16px;font-weight:700;cursor:pointer}
+.primary{background:#5b42f3;color:white}.back{background:#e8ebf3;color:#273043;margin-bottom:16px}
+.section{display:none}.section.active{display:block}.lesson{display:flex;align-items:center;gap:14px;background:white;padding:16px;border-radius:17px;margin:10px 0}
+.lesson .icon{font-size:28px}.ai{background:linear-gradient(135deg,#111827,#374151);color:white;border-radius:22px;padding:22px;margin-top:18px}
+.ai textarea{width:100%;min-height:90px;border:0;border-radius:14px;padding:14px;font-size:16px;margin:12px 0}
+nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ddd;padding:10px;display:flex;justify-content:center;gap:30px}
+nav button{background:none}.note{background:#fff7ed;padding:15px;border-radius:16px;margin-top:15px}
+@media(max-width:500px){header h1{font-size:25px}.grid{grid-template-columns:1fr 1fr}.card{padding:15px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<small>📚 STUDY • LEARN • GROW</small>
+<h1>Mahatma Gandhi<br>Government School</h1>
+<div class="search">🔎  Search class, subject or topic...</div>
+</header>
+
+<main>
+<section id="home" class="section active">
+<h2 class="title">What do you want to study?</h2>
+<div class="grid">
+<div class="card" onclick="show('classes')"><div class="icon">🎓</div><h3>My Class</h3><div class="muted">Choose your class</div></div>
+<div class="card" onclick="show('subjects')"><div class="icon">📖</div><h3>Subjects</h3><div class="muted">Explore lessons</div></div>
+<div class="card" onclick="show('quiz')"><div class="icon">🧠</div><h3>Quiz & MCQ</h3><div class="muted">Test yourself</div></div>
+<div class="card" onclick="show('papers')"><div class="icon">📄</div><h3>Previous Papers</h3><div class="muted">Practice exams</div></div>
+</div>
+<div class="ai"><h2>🤖 Ask AI — Your Doubt Solver</h2><p>Notes ya kisi topic ke baare mein doubt hai? Yahan poochho.</p><textarea id="q" placeholder="Example: Photosynthesis kya hota hai?"></textarea><button class="primary" onclick="ask()">Ask AI</button><p id="answer"></p></div>
+</section>
+
+<section id="classes" class="section">
+<button class="back" onclick="show('home')">← Back</button><h2 class="title">Select Your Class</h2>
+<div class="grid">
+<div class="card" onclick="show('subjects')"><div class="icon">1️⃣</div><h3>Class 6</h3></div>
+<div class="card" onclick="show('subjects')"><div class="icon">2️⃣</div><h3>Class 7</h3></div>
+<div class="card" onclick="show('subjects')"><div class="icon">3️⃣</div><h3>Class 8</h3></div>
+<div class="card" onclick="show('subjects')"><div class="icon">4️⃣</div><h3>Class 9</h3></div>
+<div class="card" onclick="show('subjects')"><div class="icon">5️⃣</div><h3>Class 10</h3></div>
+<div class="card" onclick="show('subjects')"><div class="icon">🎒</div><h3>Other</h3></div>
+</div>
+</section>
+
+<section id="subjects" class="section">
+<button class="back" onclick="show('home')">← Back</button><h2 class="title">Subjects</h2>
+<div class="grid">
+<div class="card" onclick="show('lessons')"><div class="icon">🔢</div><h3>Mathematics</h3></div>
+<div class="card" onclick="show('lessons')"><div class="icon">🔬</div><h3>Science</h3></div>
+<div class="card" onclick="show('lessons')"><div class="icon">🌍</div><h3>Social Science</h3></div>
+<div class="card" onclick="show('lessons')"><div class="icon">📘</div><h3>English</h3></div>
+<div class="card" onclick="show('lessons')"><div class="icon">🇮🇳</div><h3>Hindi</h3></div>
+</div>
+</section>
+
+<section id="lessons" class="section">
+<button class="back" onclick="show('subjects')">← Back</button><h2 class="title">Science — Lessons</h2>
+<div class="row"><span class="pill">Video</span><span class="pill">Notes</span><span class="pill">Practice</span></div>
+<div class="lesson"><div class="icon">▶️</div><div><b>Chapter 1: Our Environment</b><div class="muted">Teacher video lesson</div></div></div>
+<div class="lesson"><div class="icon">📑</div><div><b>Chapter 1 Notes</b><div class="muted">Read / download notes</div></div></div>
+<div class="lesson"><div class="icon">📝</div><div><b>Chapter 1 Quiz</b><div class="muted">10 MCQ questions</div></div></div>
+<div class="note">💡 <b>Need help?</b> Go to “Ask AI” and ask your question about this chapter.</div>
+</section>
+
+<section id="quiz" class="section">
+<button class="back" onclick="show('home')">← Back</button><h2 class="title">Quick Quiz</h2>
+<div class="card"><h3>Which process do green plants use to make food?</h3><p>Choose an answer:</p>
+<div class="row"><button onclick="quiz(this,false)">Respiration</button><button onclick="quiz(this,true)">Photosynthesis</button><button onclick="quiz(this,false)">Digestion</button></div><p id="quizResult"></p></div>
+</section>
+
+<section id="papers" class="section">
+<button class="back" onclick="show('home')">← Back</button><h2 class="title">Previous-Year Papers</h2>
+<div class="lesson"><div class="icon">📄</div><div><b>Class 10 — Science Paper</b><div class="muted">Practice paper • PDF</div></div></div>
+<div class="lesson"><div class="icon">📄</div><div><b>Class 10 — Mathematics Paper</b><div class="muted">Practice paper • PDF</div></div></div>
+</section>
+</main>
+<nav><button onclick="show('home')">🏠<br>Home</button><button onclick="show('classes')">🎓<br>Classes</button><button onclick="show('quiz')">🧠<br>Quiz</button><button onclick="show('home');document.getElementById('q').focus()">🤖<br>AI Doubt</button></nav>
+</div>
+<script>
+function show(id){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');scrollTo(0,0)}
+function ask(){let q=document.getElementById('q').value.trim();document.getElementById('answer').textContent=q?'AI demo: “'+q+'” — is question ka detailed answer yahan AI integration ke baad milega.':'Pehle apna question likho 😊'}
+function quiz(btn,ok){document.getElementById('quizResult').textContent=ok?'✅ Bilkul sahi!':'❌ Try again — correct answer Photosynthesis hai.'}
+</script>
+
+<style>
+.teacher-panel{background:#fff;border-radius:20px;padding:18px;margin-top:18px}
+.teacher-panel input,.teacher-panel select{width:100%;padding:11px;margin:6px 0 12px;border:1px solid #ddd;border-radius:10px}
+</style>
+<script>
+const MGKEY='mg_teacher_content';
+function mgTeacherLogin(){
+ const u=prompt('Teacher username'); const p=prompt('Teacher password');
+ if(u==='teacher'&&p==='1234'){
+   alert('Teacher login successful. Content manager demo is enabled.');
+   let title=prompt('Chapter / Topic name');
+   if(title){
+     let cls=prompt('Class (example: Class 10)','Class 10');
+     let sub=prompt('Subject','Science');
+     let video=prompt('Video URL (optional)','');
+     let notes=prompt('Notes/PDF URL (optional)','');
+     let items=JSON.parse(localStorage.getItem(MGKEY)||'[]');
+     items.push({title,cls,sub,video,notes});
+     localStorage.setItem(MGKEY,JSON.stringify(items));
+     alert('Content saved on this laptop/browser.');
+   }
+ } else alert('Demo login: teacher / 1234');
+}
+function mgShowTeacher(){
+ document.getElementById('mgTeacher').style.display='block';
+}
+function mgRenderTeacher(){
+ const box=document.getElementById('mgTeacherList'); if(!box)return;
+ const items=JSON.parse(localStorage.getItem(MGKEY)||'[]');
+ box.innerHTML=items.length?items.map((x,i)=>`<div style="padding:12px;border-bottom:1px solid #eee"><b>${x.title}</b><br>${x.cls} • ${x.sub}<br>${x.video?`🎥 <a href="${x.video}" target="_blank">Video</a>`:''} ${x.notes?`📑 <a href="${x.notes}" target="_blank">Notes</a>`:''}</div>`).join(''):'No teacher content added yet.';
+}
+function mgAI(){
+ const q=document.getElementById('mgQuestion').value.trim();
+ document.getElementById('mgAnswer').textContent=q?
+ 'AI demo: Your question was received. A secure ChatGPT/API connection is required for real AI answers.':
+ 'Please enter your doubt first.';
+}
+</script>
+
+<div id="mgTeacher" class="teacher-panel" style="display:none;max-width:760px;margin:20px auto">
+<h2>👩‍🏫 Teacher Content Panel</h2>
+<p>Demo login: <b>teacher</b> / <b>1234</b></p>
+<button onclick="mgTeacherLogin()">➕ Add Video / Notes / Chapter</button>
+<div id="mgTeacherList"></div>
+</div>
+<div class="teacher-panel" style="max-width:760px;margin:20px auto">
+<h2>🤖 AI Doubt Solver</h2>
+<textarea id="mgQuestion" style="width:100%;min-height:90px;padding:12px" placeholder="Apna study doubt likho..."></textarea>
+<button onclick="mgAI()">Ask AI</button><p id="mgAnswer"></p>
+</div>
+<script>mgShowTeacher();mgRenderTeacher();</script>
+</body></html>
