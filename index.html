@@ -34,6 +34,13 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
 .quote{font-size:18px;line-height:1.8;color:#344054}
 .placeholder-note{font-size:12px;color:var(--muted);margin-top:8px}
 @media(max-width:700px){.identity-grid{grid-template-columns:1fr}.message-grid{grid-template-columns:1fr}.principal-photo{margin:auto}}
+
+.ai-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.ai-tab{padding:11px 15px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:800}
+.ai-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.ai-panel{padding:20px;border:1px solid var(--line);border-radius:20px;background:#fff}
+.ai-answer{margin-top:16px;padding:18px;border-radius:16px;background:#f5f7ff;line-height:1.75;white-space:pre-wrap}
+.ai-meta{font-size:12px;color:var(--muted);margin-top:8px}
 </style>
 </head>
 <body>
@@ -477,12 +484,62 @@ async function openSubject(id,name){
 }
 async function openChapter(id,title){
  const root=document.getElementById('studyRoot');
- root.innerHTML=`<button class="back" onclick="loadStudy()">← Study Hub</button><div class="page-head"><div><h2>📖 ${esc(title)}</h2><p>Lessons, notes, videos and practice</p></div></div><div id="lessonList" class="list"><div class="empty">Loading lessons…</div></div><div class="card ai"><h3>🤖 AI Doubt Solver</h3><p>Ask a question about this chapter.</p><textarea id="chapterDoubt" placeholder="Type your doubt…"></textarea><button class="primary" onclick="chapterAsk()">Ask</button><div id="chapterAnswer" style="margin-top:10px"></div></div>`;
+ root.innerHTML=`<button class="back" onclick="loadStudy()">← Study Hub</button>
+ <div class="page-head"><div><h2>📖 ${esc(title)}</h2><p>Chapter resources and AI learning tools</p></div></div>
+ <div class="ai-tabs">
+   <button class="ai-tab active" id="aiTabExplain" onclick="switchAI('explain')">✨ Explain this chapter</button>
+   <button class="ai-tab" id="aiTabAsk" onclick="switchAI('ask')">🤖 Ask AI</button>
+ </div>
+ <div id="aiExplainPanel" class="ai-panel">
+   <h3>✨ Explain this full chapter by AI</h3>
+   <p class="muted">One touch gives a student-friendly explanation of the complete chapter, based on the chapter's published material.</p>
+   <button class="primary" onclick="explainChapter(${id},'${esc(title)}')">✨ Explain Full Chapter</button>
+   <div class="ai-meta">The explanation prompt is pre-filled by the portal so students do not need to write instructions.</div>
+   <div id="chapterExplanation"></div>
+ </div>
+ <div id="aiAskPanel" class="ai-panel hidden">
+   <h3>🤖 Ask AI about this chapter</h3>
+   <p class="muted">Ask a specific doubt in your own words.</p>
+   <textarea id="chapterDoubt" placeholder="Example: Explain this topic with a simple example…"></textarea>
+   <button class="primary" onclick="chapterAsk(${id},'${esc(title)}')">Ask AI</button>
+   <div id="chapterAnswer"></div>
+ </div>
+ <div class="page-head" style="margin-top:24px"><div><h3>📚 Chapter resources</h3><p>PDF notes, videos, homework and other published material.</p></div></div>
+ <div id="lessonList" class="list"><div class="empty">Loading lessons…</div></div>`;
  const r=await sb.from('lessons').select('*').eq('chapter_id',id).order('created_at',{ascending:false});
  const list=document.getElementById('lessonList');
- list.innerHTML=r.data?.length?r.data.map(l=>`<div class="lesson"><div class="icon">🎓</div><div><strong>${esc(l.title)}</strong><span class="muted small">${esc(l.description||'Study lesson')}</span></div><div class="lesson-actions">${l.video_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.video_url)}">🎥 Video</a>`:''}${l.notes_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.notes_url)}">📑 Notes</a>`:''}${l.homework?`<button class="tiny" onclick="alert('${esc(l.homework).replace(/'/g,"\\'")}')">📝 Practice</button>`:''}</div></div>`).join(''):'<div class="empty">No lessons published yet.</div>';
+ list.innerHTML=r.data?.length?r.data.map(l=>`<div class="lesson"><div class="icon">🎓</div><div><strong>${esc(l.title)}</strong><span class="muted small">${esc(l.description||'Study lesson')}</span></div><div class="lesson-actions">${l.video_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.video_url)}">🎥 Video</a>`:''}${l.notes_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.notes_url)}">📑 Notes</a>`:''}${l.homework?`<button class="tiny" onclick="alert('${esc(l.homework).replace(/'/g,"\\'")}')">📝 Practice</button>`:''}<button class="tiny" onclick="switchAI('ask');document.getElementById('chapterDoubt').value='Explain ${esc(l.title)} in simple language with an example.'">🤖 Explain</button></div></div>`).join(''):'<div class="empty">No lessons published yet.</div>';
 }
-function chapterAsk(){const q=document.getElementById('chapterDoubt').value.trim();document.getElementById('chapterAnswer').innerHTML=q?`<div class="status">Your question is saved in this session. Connect the secure AI Edge Function to generate a live AI answer.</div>`:'<div class="status">Type a question first.</div>'}
+function switchAI(which){
+ const ex=document.getElementById('aiExplainPanel'), ask=document.getElementById('aiAskPanel');
+ const te=document.getElementById('aiTabExplain'), ta=document.getElementById('aiTabAsk');
+ if(which==='explain'){ex.classList.remove('hidden');ask.classList.add('hidden');te.classList.add('active');ta.classList.remove('active')}
+ else{ex.classList.add('hidden');ask.classList.remove('hidden');te.classList.remove('active');ta.classList.add('active')}
+}
+async function callPortalAI(payload, outputId){
+ const out=document.getElementById(outputId);
+ out.innerHTML='<div class="status">🤖 AI is preparing the explanation…</div>';
+ try{
+   const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+   const data=await r.json().catch(()=>({}));
+   if(!r.ok) throw new Error(data.error||'AI service is not configured yet.');
+   out.innerHTML=`<div class="ai-answer">${esc(data.answer||'No answer returned.')}</div>`;
+ }catch(e){
+   out.innerHTML=`<div class="status error">AI service: ${esc(e.message)}<br><span class="small">The study portal is ready for the secure AI backend connection.</span></div>`;
+ }
+}
+async function explainChapter(id,title){
+ const r=await sb.from('lessons').select('title,description,homework').eq('chapter_id',id).order('created_at',{ascending:true});
+ const material=(r.data||[]).map(x=>`Lesson: ${x.title}\n${x.description||''}\nPractice: ${x.homework||''}`).join('\n\n');
+ const prompt=`Explain the full school chapter "${title}" for the student. Use simple age-appropriate language, organize the explanation into clear concepts and examples, include important points and a short recap. Base the explanation on the published chapter material below and do not invent school-specific material.\n\n${material}`;
+ await callPortalAI({mode:'explain_chapter',chapter_id:id,chapter_title:title,prompt},'chapterExplanation');
+}
+async function chapterAsk(id,title){
+ const q=document.getElementById('chapterDoubt').value.trim();
+ if(!q){document.getElementById('chapterAnswer').innerHTML='<div class="status">Type a question first.</div>';return}
+ const prompt=`Answer this student's question about the chapter "${title}" clearly and at an age-appropriate level. Show steps/examples where useful. Question: ${q}`;
+ await callPortalAI({mode:'chapter_question',chapter_id:id,chapter_title:title,prompt},'chapterAnswer');
+}
 
 async function loadNotices(){
  const box=document.getElementById('noticesList');box.innerHTML='<div class="empty">Loading…</div>';
