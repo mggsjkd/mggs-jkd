@@ -819,16 +819,23 @@ async function publishLesson(e){
   const nf=document.getElementById('lessonNotesFile')?.files[0];
   if(nf)notesUrl=await uploadContentFile(nf,'notes');
 
+  // Keep the insert aligned with the existing lessons table schema:
+  // chapter_id, title, video_url, notes_url.
+  // Homework is shown in the form, but is not sent until a dedicated
+  // homework column exists in the database.
   const ins=await sb.from('lessons').insert({
     chapter_id:chapter.id,
     title,
     video_url:document.getElementById('lessonVideo').value.trim()||null,
-    notes_url:notesUrl,
-    homework:document.getElementById('lessonHomework').value.trim()||null,
-    created_by:currentUser.id
+    notes_url:notesUrl
   });
-  if(ins.error)throw ins.error;
-  setStatus('lessonStatus','Lesson published successfully.','success');
+  if(ins.error)throw new Error('Lesson publish failed: '+ins.error.message);
+  const homework=document.getElementById('lessonHomework').value.trim();
+  setStatus('lessonStatus',
+    homework
+      ? 'Lesson published successfully. Note: homework text was not saved because the current lessons table has no homework column.'
+      : 'Lesson published successfully.',
+    'success');
   e.target.reset();
   await setupTeacherContentForm();
  }catch(err){
