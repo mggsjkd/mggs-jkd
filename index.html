@@ -178,11 +178,74 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
         <label>Chapter</label><input id="lessonChapter" required placeholder="Chapter / topic">
         <label>Lesson title</label><input id="lessonTitle" required>
         <label>Video URL</label><input id="lessonVideo" type="url" placeholder="https://…">
-        <label>Notes / PDF URL</label><input id="lessonNotes" type="url" placeholder="https://…">
+        <label>Notes / PDF URL (optional)</label><input id="lessonNotes" type="url" placeholder="https://…">
+        <label>Or upload Notes / PDF</label><input id="lessonNotesFile" type="file" accept=".pdf,application/pdf">
         <label>Homework / practice</label><textarea id="lessonHomework"></textarea>
         <button class="primary">Publish Lesson</button><div id="lessonStatus" class="status"></div>
       </form></div>
-      <div class="card"><h3>Portal status</h3><p class="muted">This panel writes through Supabase. Database RLS must authorize the authenticated teacher/admin role; frontend visibility alone is not a security control.</p><div id="staffStatus" class="status"></div></div>
+      <div class="card"><h3>Portal status</h3><p class="muted">Staff can publish study and school content. Principal/Admin approval controls account access.</p><div id="staffStatus" class="status"></div></div>
+    </div>
+
+    <div id="contentAdminPanel" class="card hidden" style="margin-top:20px">
+      <h3>🛠️ School Content Manager</h3>
+      <p class="muted">Add notices, holidays, results, gallery photos and staff profiles directly from this portal.</p>
+      <div class="grid2">
+        <div class="card">
+          <h4>📢 Notice</h4>
+          <form onsubmit="publishNoticeAdmin(event)">
+            <input id="mgrNoticeTitle" placeholder="Notice title" required>
+            <textarea id="mgrNoticeContent" placeholder="Notice content" required></textarea>
+            <button class="primary">Publish Notice</button><div id="mgrNoticeStatus" class="status"></div>
+          </form>
+        </div>
+        <div class="card">
+          <h4>🗓️ Holiday</h4>
+          <form onsubmit="publishHolidayAdmin(event)">
+            <input id="mgrHolidayTitle" placeholder="Holiday title" required>
+            <input id="mgrHolidayDate" type="date" required>
+            <textarea id="mgrHolidayDescription" placeholder="Description"></textarea>
+            <button class="primary">Publish Holiday</button><div id="mgrHolidayStatus" class="status"></div>
+          </form>
+        </div>
+        <div class="card">
+          <h4>📊 Result</h4>
+          <form onsubmit="publishResultAdmin(event)">
+            <input id="mgrResultStudent" placeholder="Student name" required>
+            <input id="mgrResultRoll" placeholder="Roll number" required>
+            <input id="mgrResultClass" placeholder="Class" required>
+            <input id="mgrResultExam" placeholder="Exam name" required>
+            <textarea id="mgrResultData" placeholder='Result details, e.g. {"Math":"88","Science":"91"}' required></textarea>
+            <button class="primary">Publish Result</button><div id="mgrResultStatus" class="status"></div>
+          </form>
+        </div>
+        <div class="card">
+          <h4>🖼️ Gallery photo</h4>
+          <form onsubmit="publishGalleryAdmin(event)">
+            <input id="mgrGalleryTitle" placeholder="Photo title">
+            <input id="mgrGalleryFile" type="file" accept="image/*" required>
+            <button class="primary">Upload Photo</button><div id="mgrGalleryStatus" class="status"></div>
+          </form>
+        </div>
+        <div class="card">
+          <h4>👩‍🏫 Staff profile</h4>
+          <form onsubmit="publishStaffAdmin(event)">
+            <input id="mgrStaffName" placeholder="Name" required>
+            <input id="mgrStaffDesignation" placeholder="Designation">
+            <input id="mgrStaffSubject" placeholder="Subject">
+            <input id="mgrStaffPhoto" type="file" accept="image/*">
+            <button class="primary">Publish Staff</button><div id="mgrStaffStatus" class="status"></div>
+          </form>
+        </div>
+        <div class="card">
+          <h4>📄 Notes / PDF</h4>
+          <p class="muted">Lesson publishing above accepts a notes/PDF upload as well as a video URL.</p>
+        </div>
+      </div>
+
+      <div id="approvalPanel" class="card hidden" style="margin-top:20px">
+        <h4>🔐 Pending account requests</h4>
+        <div id="requestList" class="list"><div class="empty">Loading requests…</div></div>
+      </div>
     </div>
   </div>
 </section>
@@ -196,6 +259,12 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
     <div class="tabs"><button id="tabLogin" class="active" onclick="setAuthMode('login')">Login</button><button id="tabSignup" onclick="setAuthMode('signup')">Create account</button></div>
     <form onsubmit="authSubmit(event)">
       <div id="signupNameWrap" class="hidden"><label>Name</label><input id="authName" placeholder="Your name"></div>
+      <div id="signupRoleWrap" class="hidden">
+        <label>Account type</label>
+        <select id="authRequestedRole"><option value="student">Student</option><option value="teacher">Staff / Teacher</option></select>
+        <label>Class (students)</label>
+        <select id="authClass"><option value="">Select class</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+      </div>
       <label>Email</label><input id="authEmail" type="email" required>
       <label>Password</label><input id="authPassword" type="password" minlength="6" required>
       <button id="authButton" class="primary">Login</button>
@@ -229,33 +298,97 @@ function showPage(id){
 }
 function openAuth(){document.getElementById('authModal').classList.add('open')}
 function closeAuth(){document.getElementById('authModal').classList.remove('open')}
-function setAuthMode(mode){authMode=mode;document.getElementById('tabLogin').classList.toggle('active',mode==='login');document.getElementById('tabSignup').classList.toggle('active',mode==='signup');document.getElementById('signupNameWrap').classList.toggle('hidden',mode!=='signup');document.getElementById('authButton').textContent=mode==='login'?'Login':'Create account';document.getElementById('authStatus').textContent=''}
+function setAuthMode(mode){authMode=mode;document.getElementById('tabLogin').classList.toggle('active',mode==='login');document.getElementById('tabSignup').classList.toggle('active',mode==='signup');document.getElementById('signupNameWrap').classList.toggle('hidden',mode!=='signup');document.getElementById('signupRoleWrap').classList.toggle('hidden',mode!=='signup');document.getElementById('authButton').textContent=mode==='login'?'Login':'Create account';document.getElementById('authStatus').textContent=''}
 function setStatus(id,msg,type=''){const e=document.getElementById(id);if(!e)return;e.className='status '+type;e.textContent=msg}
 async function authSubmit(e){
  e.preventDefault();setStatus('authStatus','Working…');
  const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value,name=document.getElementById('authName').value.trim();
  let r;
- if(authMode==='signup') r=await sb.auth.signUp({email,password,options:{data:{name}}});
+ if(authMode==='signup'){const requested_role=document.getElementById('authRequestedRole').value;const class_name=document.getElementById('authClass').value||null;r=await sb.auth.signUp({email,password,options:{data:{name,requested_role,class_name}}});}
  else r=await sb.auth.signInWithPassword({email,password});
  if(r.error){setStatus('authStatus',r.error.message,'error');return}
  if(authMode==='signup'){setStatus('authStatus','Account created. If email confirmation is enabled, check your email.','success');return}
  await initSession();closeAuth();
 }
 async function logout(){await sb.auth.signOut();currentUser=null;currentProfile=null;document.getElementById('loginNav').classList.remove('hidden');document.getElementById('logoutNav').classList.add('hidden');showPage('home')}
-function isStaff(){return currentProfile&&['teacher','admin'].includes(currentProfile.role)}
+function isStaff(){return currentProfile&&['teacher','admin','principal'].includes(currentProfile.role)&&currentProfile.approval_status==='approved'}
+function isManagement(){return currentProfile&&['admin','principal'].includes(currentProfile.role)&&currentProfile.approval_status==='approved'}
 async function initSession(){
  const {data}=await sb.auth.getSession();currentUser=data.session?.user||null;
  if(currentUser){
   const r=await sb.from('profiles').select('*').eq('id',currentUser.id).maybeSingle();
-  currentProfile=r.data||{id:currentUser.id,name:currentUser.user_metadata?.name||currentUser.email,role:'student'};
+  if(r.error){setStatus('authStatus',r.error.message,'error');return}
+  currentProfile=r.data;
   document.getElementById('loginNav').classList.add('hidden');document.getElementById('logoutNav').classList.remove('hidden');
-  document.getElementById('accountName').textContent=currentProfile.name||'Student';
+  document.getElementById('accountName').textContent=currentProfile?.name||currentUser.email||'User';
   document.getElementById('accountEmail').textContent=currentUser.email||'';
-  document.getElementById('accountRole').textContent='Role: '+currentProfile.role;
-  if(isStaff()){document.getElementById('noticeAdmin').classList.remove('hidden');document.getElementById('staffStatus').textContent='Signed in as '+currentProfile.role; }
+  document.getElementById('accountRole').textContent=currentProfile?('Role: '+currentProfile.role+' • Status: '+currentProfile.approval_status):'Approval pending';
+  if(!currentProfile || currentProfile.approval_status!=='approved'){
+    document.getElementById('staffStatus').textContent='Account approval is pending. A Principal/Admin must approve this account.';
+    return;
+  }
+  if(isStaff()){
+    document.getElementById('contentAdminPanel').classList.remove('hidden');
+    document.getElementById('staffStatus').textContent='Signed in as '+currentProfile.role;
+  }
+  if(isManagement()){
+    document.getElementById('approvalPanel').classList.remove('hidden');
+    loadAccountRequests();
+  }
  }
 }
 sb.auth.onAuthStateChange(()=>setTimeout(initSession,0));
+
+async function uploadContentFile(file,folder){
+ if(!file)return null;
+ const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+ const path=folder+'/'+crypto.randomUUID()+'-'+safe;
+ const r=await sb.storage.from('mggs-content').upload(path,file,{upsert:false});
+ if(r.error)throw r.error;
+ return sb.storage.from('mggs-content').getPublicUrl(path).data.publicUrl;
+}
+async function publishNoticeAdmin(e){
+ e.preventDefault();setStatus('mgrNoticeStatus','Publishing…');
+ const r=await sb.from('notices').insert({title:document.getElementById('mgrNoticeTitle').value.trim(),content:document.getElementById('mgrNoticeContent').value.trim(),published:true,created_by:currentUser.id});
+ if(r.error)setStatus('mgrNoticeStatus',r.error.message,'error');else{setStatus('mgrNoticeStatus','Published.','success');e.target.reset();loadNotices()}
+}
+async function publishHolidayAdmin(e){
+ e.preventDefault();setStatus('mgrHolidayStatus','Publishing…');
+ const r=await sb.from('holidays').insert({title:document.getElementById('mgrHolidayTitle').value.trim(),holiday_date:document.getElementById('mgrHolidayDate').value,description:document.getElementById('mgrHolidayDescription').value.trim(),created_by:currentUser.id});
+ if(r.error)setStatus('mgrHolidayStatus',r.error.message,'error');else{setStatus('mgrHolidayStatus','Published.','success');e.target.reset();loadHolidays()}
+}
+async function publishResultAdmin(e){
+ e.preventDefault();setStatus('mgrResultStatus','Publishing…');
+ let data;try{data=JSON.parse(document.getElementById('mgrResultData').value)}catch{setStatus('mgrResultStatus','Result details must be valid JSON.','error');return}
+ const r=await sb.from('results').insert({student_name:document.getElementById('mgrResultStudent').value.trim(),roll_number:document.getElementById('mgrResultRoll').value.trim(),class_name:document.getElementById('mgrResultClass').value.trim(),exam_name:document.getElementById('mgrResultExam').value.trim(),result_data:data,published:true,created_by:currentUser.id});
+ if(r.error)setStatus('mgrResultStatus',r.error.message,'error');else{setStatus('mgrResultStatus','Published.','success');e.target.reset()}
+}
+async function publishGalleryAdmin(e){
+ e.preventDefault();setStatus('mgrGalleryStatus','Uploading…');
+ try{const url=await uploadContentFile(document.getElementById('mgrGalleryFile').files[0],'gallery');const r=await sb.from('gallery').insert({title:document.getElementById('mgrGalleryTitle').value.trim()||null,image_url:url,created_by:currentUser.id});if(r.error)throw r.error;setStatus('mgrGalleryStatus','Photo uploaded.','success');e.target.reset();loadGallery()}catch(err){setStatus('mgrGalleryStatus',err.message,'error')}
+}
+async function publishStaffAdmin(e){
+ e.preventDefault();setStatus('mgrStaffStatus','Publishing…');
+ try{let photo=null;const f=document.getElementById('mgrStaffPhoto').files[0];if(f)photo=await uploadContentFile(f,'staff');const r=await sb.from('staff').insert({name:document.getElementById('mgrStaffName').value.trim(),designation:document.getElementById('mgrStaffDesignation').value.trim()||null,subject:document.getElementById('mgrStaffSubject').value.trim()||null,photo_url:photo,created_by:currentUser.id});if(r.error)throw r.error;setStatus('mgrStaffStatus','Staff profile published.','success');e.target.reset();loadStaff()}catch(err){setStatus('mgrStaffStatus',err.message,'error')}
+}
+async function loadAccountRequests(){
+ const box=document.getElementById('requestList');if(!box)return;box.innerHTML='<div class="empty">Loading requests…</div>';
+ const r=await sb.from('account_requests').select('*').eq('status','pending').order('created_at',{ascending:false});
+ if(r.error){box.innerHTML='<div class="status error">'+esc(r.error.message)+'</div>';return}
+ box.innerHTML=r.data?.length?r.data.map(x=>`<div class="card"><strong>${esc(x.name||x.email)}</strong><p class="muted">${esc(x.email||'')} • ${esc(x.requested_role)}${x.class_name?' • Class '+esc(x.class_name):''}</p><button class="primary" onclick="approveRequest(${x.id},'${x.user_id}')">Approve</button> <button class="secondary" onclick="rejectRequest(${x.id},'${x.user_id}')">Reject</button></div>`).join(''):'<div class="empty">No pending account requests.</div>';
+}
+async function approveRequest(id,userId){
+ const p=await sb.from('profiles').update({approval_status:'approved'}).eq('id',userId);
+ if(p.error){alert(p.error.message);return}
+ const r=await sb.from('account_requests').update({status:'approved',reviewed_by:currentUser.id,reviewed_at:new Date().toISOString()}).eq('id',id);
+ if(r.error)alert(r.error.message);else loadAccountRequests();
+}
+async function rejectRequest(id,userId){
+ const p=await sb.from('profiles').update({approval_status:'rejected'}).eq('id',userId);
+ if(p.error){alert(p.error.message);return}
+ const r=await sb.from('account_requests').update({status:'rejected',reviewed_by:currentUser.id,reviewed_at:new Date().toISOString()}).eq('id',id);
+ if(r.error)alert(r.error.message);else loadAccountRequests();
+}
 
 async function loadStudy(){
  const root=document.getElementById('studyRoot');
@@ -309,7 +442,7 @@ async function publishLesson(e){
  if(c.error){setStatus('lessonStatus',c.error.message,'error');return}
  let chapter=c.data;
  if(!chapter){const ins=await sb.from('chapters').insert({subject_id:subject.id,class_name:cls,title:chapterTitle}).select().single();if(ins.error){setStatus('lessonStatus',ins.error.message,'error');return}chapter=ins.data}
- const ins=await sb.from('lessons').insert({chapter_id:chapter.id,title:document.getElementById('lessonTitle').value.trim(),video_url:document.getElementById('lessonVideo').value.trim()||null,notes_url:document.getElementById('lessonNotes').value.trim()||null,homework:document.getElementById('lessonHomework').value.trim()||null});
+ let notesUrl=document.getElementById('lessonNotes').value.trim()||null; try{const nf=document.getElementById('lessonNotesFile')?.files[0]; if(nf) notesUrl=await uploadContentFile(nf,'notes');}catch(err){setStatus('lessonStatus',err.message,'error');return} const ins=await sb.from('lessons').insert({chapter_id:chapter.id,title:document.getElementById('lessonTitle').value.trim(),video_url:document.getElementById('lessonVideo').value.trim()||null,notes_url:notesUrl,homework:document.getElementById('lessonHomework').value.trim()||null,created_by:currentUser.id});
  if(ins.error)setStatus('lessonStatus',ins.error.message,'error');else{setStatus('lessonStatus','Lesson published successfully.','success');e.target.reset()}
 }
 function askDoubt(){const q=document.getElementById('doubtText').value.trim();document.getElementById('doubtAnswer').textContent=q?'AI Edge Function connection is the next backend step; the portal UI is ready for it.':'Type your question first.'}
