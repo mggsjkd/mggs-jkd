@@ -39,7 +39,7 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
       <button onclick="showPage('holidays')">Holidays</button>
       <button onclick="showPage('gallery')">Gallery</button>
       <button onclick="showPage('contact')">Contact</button>
-      <button id="loginNav" onclick="openAuth()" class="primary">Student / Staff Login</button>
+      <button id="adminNav" onclick="showPage('teacher')" class="primary hidden">⚙️ Admin Panel</button><button id="loginNav" onclick="openAuth()" class="primary">Student / Staff Login</button>
       <button id="logoutNav" onclick="logout()" class="secondary hidden">Logout</button>
     </nav>
   </div>
@@ -245,6 +245,18 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
       <div id="approvalPanel" class="card hidden" style="margin-top:20px">
         <h4>🔐 Pending account requests</h4>
         <div id="requestList" class="list"><div class="empty">Loading requests…</div></div>
+        <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:18px">
+          <h4>👩‍🏫 Teacher / Staff Assignments</h4>
+          <p class="muted">Principal/Admin can assign an approved teacher to a class and subject.</p>
+          <form onsubmit="assignTeacher(event)" class="grid2">
+            <select id="assignTeacher" required><option value="">Select approved teacher</option></select>
+            <select id="assignClass" required><option value="">Class</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+            <input id="assignSubject" placeholder="Subject" required>
+            <button class="primary">Assign Teacher</button>
+          </form>
+          <div id="assignmentStatus" class="status"></div>
+          <div id="assignmentList" class="list"><div class="empty">Loading assignments…</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -333,7 +345,10 @@ async function initSession(){
   }
   if(isManagement()){
     document.getElementById('approvalPanel').classList.remove('hidden');
+    document.getElementById('adminNav').classList.remove('hidden');
     loadAccountRequests();
+    loadTeachersForAssignment();
+    loadTeacherAssignments();
   }
  }
 }
@@ -390,6 +405,29 @@ async function rejectRequest(id,userId){
  if(r.error)alert(r.error.message);else loadAccountRequests();
 }
 
+
+async function loadTeachersForAssignment(){
+ const sel=document.getElementById('assignTeacher'); if(!sel)return;
+ const r=await sb.from('profiles').select('id,name').eq('role','teacher').eq('approval_status','approved').order('name');
+ if(r.error){sel.innerHTML='<option value="">Unable to load teachers</option>';return}
+ sel.innerHTML='<option value="">Select approved teacher</option>'+(r.data||[]).map(t=>`<option value="${t.id}">${esc(t.name||t.id)}</option>`).join('');
+}
+async function assignTeacher(e){
+ e.preventDefault(); setStatus('assignmentStatus','Assigning…');
+ const teacher_id=document.getElementById('assignTeacher').value;
+ const class_name=document.getElementById('assignClass').value;
+ const subject_name=document.getElementById('assignSubject').value.trim();
+ if(!teacher_id||!class_name||!subject_name){setStatus('assignmentStatus','Select teacher, class and subject.','error');return}
+ const r=await sb.from('teacher_assignments').insert({teacher_id,class_name,subject_name,assigned_by:currentUser.id});
+ if(r.error)setStatus('assignmentStatus',r.error.message,'error');
+ else{setStatus('assignmentStatus','Teacher assigned successfully.','success');e.target.reset();loadTeacherAssignments();}
+}
+async function loadTeacherAssignments(){
+ const box=document.getElementById('assignmentList'); if(!box)return;
+ const r=await sb.from('teacher_assignments').select('id,class_name,subject_name,teacher_id,profiles(name)').order('created_at',{ascending:false});
+ if(r.error){box.innerHTML='<div class="status error">'+esc(r.error.message)+'</div>';return}
+ box.innerHTML=r.data?.length?r.data.map(a=>`<div class="card"><strong>${esc(a.profiles?.name||a.teacher_id)}</strong><p class="muted">Class ${esc(a.class_name)} · ${esc(a.subject_name)}</p></div>`).join(''):'<div class="empty">No teacher assignments yet.</div>';
+}
 async function loadStudy(){
  const root=document.getElementById('studyRoot');
  root.innerHTML=`<div class="pillrow">${[6,7,8,9,10].map(c=>`<button class="pill ${String(c)===String(selectedClass)?'active':''}" onclick="selectClass('${c}')">Class ${c}</button>`).join('')}</div><div id="studyContent" class="card"><div class="empty">Loading subjects…</div></div>`;
