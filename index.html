@@ -564,8 +564,7 @@ async function chapterAsk(){
   try{
     const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'question',prompt:q,chapter:selectedChapter,subject:selectedSubject,class_name:selectedClass})});
     const j=await r.json();if(!r.ok)throw new Error(j.error||'AI service error.');
-    box.innerHTML=`<div class="ai-answer">${esc(j.answer||'No answer returned.').replace(/
-/g,'<br>')}</div>`;
+    box.innerHTML=`<div class="ai-answer">${esc(j.answer||'No answer returned.').replace(/\n/g,'<br>')}</div>`;
   }catch(err){box.innerHTML=`<div class="status error">${esc(err.message)}</div>`}
 }
 
