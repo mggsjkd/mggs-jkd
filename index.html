@@ -523,30 +523,51 @@ async function loadTeacherAssignments(){
  box.innerHTML=r.data?.length?r.data.map(a=>`<div class="card"><strong>${esc(a.profiles?.name||a.teacher_id)}</strong><p class="muted">Class ${esc(a.class_name)} · ${esc(a.subject_name)}</p></div>`).join(''):'<div class="empty">No teacher assignments yet.</div>';
 }
 async function loadStudy(){
- const root=document.getElementById('studyRoot');
- root.innerHTML=`<div class="pillrow">${[6,7,8,9,10].map(c=>`<button class="pill ${String(c)===String(selectedClass)?'active':''}" onclick="selectClass('${c}')">Class ${c}</button>`).join('')}</div><div id="studyContent" class="card"><div class="empty">Loading subjects…</div></div>`;
- const r=await sb.from('subjects').select('*').eq('class_name',String(selectedClass)).order('name');
- let subjects=r.data||[];
- if(!subjects.length){const all=await sb.from('subjects').select('*').order('name');subjects=all.data||[]}
- const content=document.getElementById('studyContent');
- content.innerHTML=`<h3>Class ${esc(selectedClass)} — Subjects</h3><div class="grid">${subjects.length?subjects.map(s=>`<button class="card feature" style="text-align:left" onclick="openSubject(${s.id},'${esc(s.name)}')"><div class="icon">📘</div><h3>${esc(s.name)}</h3><p class="muted">Open chapters and lessons →</p></button>`).join(''):'<div class="empty">No subjects have been published yet.</div>'}</div>`;
+  const root=document.getElementById('studyRoot');
+  root.innerHTML=`<div class="pillrow">${[6,7,8,9,10].map(c=>`<button class="pill ${String(c)===String(selectedClass)?'active':''}" onclick="selectClass('${c}')">Class ${c}</button>`).join('')}</div><div id="studyContent" class="card"><div class="empty">Loading subjects…</div></div>`;
+  // Subjects are global in the current schema; class membership comes from chapters.class_name.
+  const [sr,cr]=await Promise.all([
+    sb.from('subjects').select('id,name').order('name'),
+    sb.from('chapters').select('id,subject_id,title,class_name').eq('class_name',String(selectedClass)).order('title')
+  ]);
+  if(sr.error){document.getElementById('studyContent').innerHTML=`<div class="status error">${esc(sr.error.message)}</div>`;return}
+  if(cr.error){document.getElementById('studyContent').innerHTML=`<div class="status error">${esc(cr.error.message)}</div>`;return}
+  const chapterRows=cr.data||[];
+  const subjectIds=new Set(chapterRows.map(ch=>String(ch.subject_id)));
+  const subjects=(sr.data||[]).filter(sub=>subjectIds.has(String(sub.id)));
+  const content=document.getElementById('studyContent');
+  content.innerHTML=`<h3>Class ${esc(selectedClass)} — Subjects</h3><p class="muted">Only subjects with published chapters for this class are shown.</p><div class="grid">${subjects.length?subjects.map(sub=>`<button class="card feature" style="text-align:left" onclick="openSubject(${sub.id},'${esc(sub.name)}')"><div class="icon">📘</div><h3>${esc(sub.name)}</h3><p class="muted">Open chapters and lessons →</p></button>`).join(''):'<div class="empty">No chapters have been published for this class yet.</div>'}</div>`;
 }
-function selectClass(c){selectedClass=c;loadStudy()}
+function selectClass(c){selectedClass=c;selectedSubject=null;selectedChapter=null;loadStudy()}
 async function openSubject(id,name){
- const root=document.getElementById('studyRoot');
- root.innerHTML=`<button class="back" onclick="loadStudy()">← Back to subjects</button><div class="page-head"><div><h2>📘 ${esc(name)}</h2><p>Class ${esc(selectedClass)} chapters</p></div></div><div id="chapterList" class="list"><div class="empty">Loading chapters…</div></div>`;
- const r=await sb.from('chapters').select('*').eq('subject_id',id).eq('class_name',String(selectedClass)).order('title');
- const list=document.getElementById('chapterList');
- list.innerHTML=r.data?.length?r.data.map(ch=>`<button class="card feature" style="text-align:left" onclick="openChapter(${ch.id},'${esc(ch.title)}')"><strong>📖 ${esc(ch.title)}</strong><span class="muted small">Open lessons →</span></button>`).join(''):'<div class="empty">No chapters published for this subject yet.</div>';
+  selectedSubject={id,name};
+  const root=document.getElementById('studyRoot');
+  root.innerHTML=`<button class="back" onclick="loadStudy()">← Back to subjects</button><div class="page-head"><div><h2>📘 ${esc(name)}</h2><p>Class ${esc(selectedClass)} chapters</p></div></div><div id="chapterList" class="list"><div class="empty">Loading chapters…</div></div>`;
+  const r=await sb.from('chapters').select('*').eq('subject_id',id).eq('class_name',String(selectedClass)).order('title');
+  const list=document.getElementById('chapterList');
+  if(r.error){list.innerHTML=`<div class="status error">${esc(r.error.message)}</div>`;return}
+  list.innerHTML=r.data?.length?r.data.map(ch=>`<button class="card feature" style="text-align:left" onclick="openChapter(${ch.id},'${esc(ch.title)}')"><strong>📖 ${esc(ch.title)}</strong><span class="muted small">Open lessons →</span></button>`).join(''):'<div class="empty">No chapters published for this subject yet.</div>';
 }
 async function openChapter(id,title){
- const root=document.getElementById('studyRoot');
- root.innerHTML=`<button class="back" onclick="loadStudy()">← Study Hub</button><div class="page-head"><div><h2>📖 ${esc(title)}</h2><p>Lessons, notes, videos and practice</p></div></div><div id="lessonList" class="list"><div class="empty">Loading lessons…</div></div><div class="card ai"><h3>🤖 AI Doubt Solver</h3><p>Ask a question about this chapter.</p><textarea id="chapterDoubt" placeholder="Type your doubt…"></textarea><button class="primary" onclick="chapterAsk()">Ask</button><div id="chapterAnswer" style="margin-top:10px"></div></div>`;
- const r=await sb.from('lessons').select('*').eq('chapter_id',id).order('created_at',{ascending:false});
- const list=document.getElementById('lessonList');
- list.innerHTML=r.data?.length?r.data.map(l=>`<div class="lesson"><div class="icon">🎓</div><div><strong>${esc(l.title)}</strong><span class="muted small">${esc(l.description||'Study lesson')}</span></div><div class="lesson-actions">${l.video_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.video_url)}">🎥 Video</a>`:''}${l.notes_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.notes_url)}">📑 Notes</a>`:''}${l.homework?`<button class="tiny" onclick="alert('${esc(l.homework).replace(/'/g,"\\'")}')">📝 Practice</button>`:''}</div></div>`).join(''):'<div class="empty">No lessons published yet.</div>';
+  selectedChapter={id,title};
+  const root=document.getElementById('studyRoot');
+  root.innerHTML=`<button class="back" onclick="openSubject(${selectedSubject.id},'${esc(selectedSubject.name)}')">← ${esc(selectedSubject.name)}</button><div class="page-head"><div><h2>📖 ${esc(title)}</h2><p>Class ${esc(selectedClass)} · Lessons, notes, videos and practice</p></div></div><div class="card ai"><h3>✨ Explain this Chapter</h3><p>Get a complete student-friendly explanation with key ideas, examples and revision points.</p><button class="primary" onclick="explainCurrentChapter()">Explain this chapter with AI</button><div id="chapterInlineAI" class="ai-answer" style="margin-top:12px"></div></div><div id="lessonList" class="list"><div class="empty">Loading lessons…</div></div><div class="card ai"><h3>🤖 Ask AI about this chapter</h3><textarea id="chapterDoubt" placeholder="Type your doubt…"></textarea><button class="primary" onclick="chapterAsk()">Ask AI</button><div id="chapterAnswer" style="margin-top:10px"></div></div>`;
+  const r=await sb.from('lessons').select('*').eq('chapter_id',id).order('created_at',{ascending:false});
+  const list=document.getElementById('lessonList');
+  if(r.error){list.innerHTML=`<div class="status error">${esc(r.error.message)}</div>`;return}
+  list.innerHTML=r.data?.length?r.data.map(l=>`<div class="lesson"><div class="icon">🎓</div><div><strong>${esc(l.title)}</strong><span class="muted small">${esc(l.description||'Study lesson')}</span></div><div class="lesson-actions">${l.video_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.video_url)}">🎥 Video</a>`:''}${l.notes_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.notes_url)}">📑 Notes</a>`:''}${l.homework?`<button class="tiny" onclick="alert('${esc(l.homework).replace(/'/g,"\'")}')">📝 Practice</button>`:''}</div></div>`).join(''):'<div class="empty">No lessons published yet.</div>';
 }
-function chapterAsk(){const q=document.getElementById('chapterDoubt').value.trim();document.getElementById('chapterAnswer').innerHTML=q?`<div class="status">Your question is saved in this session. Connect the secure AI Edge Function to generate a live AI answer.</div>`:'<div class="status">Type a question first.</div>'}
+async function chapterAsk(){
+  const q=document.getElementById('chapterDoubt').value.trim(),box=document.getElementById('chapterAnswer');
+  if(!q){box.innerHTML='<div class="status">Type a question first.</div>';return}
+  box.innerHTML='<div class="status">Thinking…</div>';
+  try{
+    const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'question',prompt:q,chapter:selectedChapter,subject:selectedSubject,class_name:selectedClass})});
+    const j=await r.json();if(!r.ok)throw new Error(j.error||'AI service error.');
+    box.innerHTML=`<div class="ai-answer">${esc(j.answer||'No answer returned.').replace(/
+/g,'<br>')}</div>`;
+  }catch(err){box.innerHTML=`<div class="status error">${esc(err.message)}</div>`}
+}
 
 async function loadNotices(){
  const box=document.getElementById('noticesList');box.innerHTML='<div class="empty">Loading…</div>';
@@ -566,13 +587,15 @@ async function loadGallery(){const box=document.getElementById('galleryList');co
 
 async function explainCurrentChapter(){
   if(!selectedChapter){setStatus('aiStatus','Open a chapter first.','error');return}
-  const box=document.getElementById('chapterAIAnswer'); box.textContent='Generating a simple full-chapter explanation…';
+  const box=document.getElementById('chapterInlineAI')||document.getElementById('chapterAIAnswer');
+  if(!box){setStatus('aiStatus','Open a chapter first.','error');return}
+  box.textContent='Generating a simple full-chapter explanation…';
   const prompt=`Explain this school chapter for a student in simple language. Cover the main ideas, important terms, examples, key points to remember, and a short revision summary. Chapter: ${selectedChapter.title||''}. Subject: ${selectedSubject?.name||''}. Class: ${selectedClass}.`;
   try{
-    const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'explain',prompt,chapter:selectedChapter})});
+    const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'explain',prompt,chapter:selectedChapter,subject:selectedSubject,class_name:selectedClass})});
     const j=await r.json(); if(!r.ok) throw new Error(j.error||'AI service is not configured yet.');
-    box.textContent=j.answer||'No answer returned.';
-  }catch(err){box.textContent=err.message}
+    box.innerHTML=`<div class="ai-answer">${esc(j.answer||'No answer returned.').replace(/\n/g,'<br>')}</div>`;
+  }catch(err){box.innerHTML=`<div class="status error">${esc(err.message)}</div>`}
 }
 async function askPortalAI(){
   const q=document.getElementById('portalAIQuestion').value.trim(); const box=document.getElementById('portalAIAnswer');
