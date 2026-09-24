@@ -266,8 +266,8 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
     <div class="grid2">
       <div class="card"><h3>Publish lesson</h3><form onsubmit="publishLesson(event)">
         <label>Class</label><select id="lessonClass" required><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
-        <label>Subject</label><input id="lessonSubject" required placeholder="Mathematics">
-        <label>Chapter</label><input id="lessonChapter" required placeholder="Chapter / topic">
+        <label>Subject</label><select id="lessonSubject" required><option value="">Loading subjects…</option></select>
+        <label>Chapter</label><select id="lessonChapter" required><option value="">Select a subject first</option></select>
         <label>Lesson title</label><input id="lessonTitle" required>
         <label>Video URL</label><input id="lessonVideo" type="url" placeholder="https://…">
         <label>Notes / PDF URL (optional)</label><input id="lessonNotes" type="url" placeholder="https://…">
@@ -436,6 +436,7 @@ async function initSession(){
   if(isStaff()){
     document.getElementById('contentAdminPanel').classList.remove('hidden');
     document.getElementById('staffStatus').textContent='Signed in as '+currentProfile.role;
+    setupTeacherContentForm();
   }
   if(isManagement()){
     document.getElementById('approvalPanel').classList.remove('hidden');
@@ -447,6 +448,7 @@ async function initSession(){
  }
 }
 sb.auth.onAuthStateChange(()=>setTimeout(initSession,0));
+window.addEventListener('DOMContentLoaded',()=>{if(currentProfile&&isStaff())setupTeacherContentForm()});
 
 async function uploadContentFile(file,folder){
  if(!file)return null;
@@ -643,20 +645,73 @@ async function loadLeaveApplications(){
  box.innerHTML=r.data?.length?r.data.map(x=>`<div class="card"><strong>${fmt(x.start_date)} → ${fmt(x.end_date)}</strong><p>${esc(x.reason)}</p><p>Status: <strong>${esc(x.status)}</strong></p>${x.application_url?`<a href="${esc(x.application_url)}" target="_blank">Open document</a>`:''}</div>`).join(''):'<div class="empty">No applications yet.</div>';
 }
 
+async function loadTeacherSubjects(){
+  const subjectEl=document.getElementById('lessonSubject');
+  const chapterEl=document.getElementById('lessonChapter');
+  if(!subjectEl||!chapterEl)return;
+  subjectEl.innerHTML='<option value="">Loading subjects…</option>';
+  chapterEl.innerHTML='<option value="">Select a subject first</option>';
+  const r=await sb.from('subjects').select('id,name').order('name');
+  if(r.error){subjectEl.innerHTML='<option value="">Unable to load subjects</option>';setStatus('lessonStatus',r.error.message,'error');return}
+  subjectEl.innerHTML='<option value="">Select subject</option>'+(r.data||[]).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
+}
+async function loadTeacherChapters(){
+  const cls=document.getElementById('lessonClass')?.value;
+  const subjectId=document.getElementById('lessonSubject')?.value;
+  const chapterEl=document.getElementById('lessonChapter');
+  if(!chapterEl)return;
+  chapterEl.innerHTML='<option value="">Loading chapters…</option>';
+  if(!subjectId){chapterEl.innerHTML='<option value="">Select a subject first</option>';return}
+  const r=await sb.from('chapters').select('id,title').eq('class_name',String(cls)).eq('subject_id',subjectId).order('title');
+  if(r.error){chapterEl.innerHTML='<option value="">Unable to load chapters</option>';return}
+  chapterEl.innerHTML='<option value="">Select existing chapter or choose New chapter</option>'+
+    '<option value="__new__">＋ New chapter</option>'+
+    (r.data||[]).map(x=>`<option value="${esc(x.id)}">${esc(x.title)}</option>`).join('');
+}
+function setupTeacherContentForm(){
+  const cls=document.getElementById('lessonClass'),subject=document.getElementById('lessonSubject'),chapter=document.getElementById('lessonChapter');
+  if(!cls||!subject||!chapter)return;
+  cls.onchange=loadTeacherChapters;
+  subject.onchange=loadTeacherChapters;
+  loadTeacherSubjects();
+}
 async function publishLesson(e){
  e.preventDefault();setStatus('lessonStatus','Publishing…');
- const cls=document.getElementById('lessonClass').value,subjectName=document.getElementById('lessonSubject').value.trim(),chapterTitle=document.getElementById('lessonChapter').value.trim();
- let s=await sb.from('subjects').select('*').eq('name',subjectName).eq('class_name',cls).maybeSingle();
- if(s.error){setStatus('lessonStatus',s.error.message,'error');return}
- let subject=s.data;
- if(!subject){const ins=await sb.from('subjects').insert({name:subjectName,class_name:cls}).select().single();if(ins.error){setStatus('lessonStatus',ins.error.message,'error');return}subject=ins.data}
- let c=await sb.from('chapters').select('*').eq('subject_id',subject.id).eq('class_name',cls).eq('title',chapterTitle).maybeSingle();
- if(c.error){setStatus('lessonStatus',c.error.message,'error');return}
- let chapter=c.data;
- if(!chapter){const ins=await sb.from('chapters').insert({subject_id:subject.id,class_name:cls,title:chapterTitle}).select().single();if(ins.error){setStatus('lessonStatus',ins.error.message,'error');return}chapter=ins.data}
- let notesUrl=document.getElementById('lessonNotes').value.trim()||null; try{const nf=document.getElementById('lessonNotesFile')?.files[0]; if(nf) notesUrl=await uploadContentFile(nf,'notes');}catch(err){setStatus('lessonStatus',err.message,'error');return} const ins=await sb.from('lessons').insert({chapter_id:chapter.id,title:document.getElementById('lessonTitle').value.trim(),video_url:document.getElementById('lessonVideo').value.trim()||null,notes_url:notesUrl,homework:document.getElementById('lessonHomework').value.trim()||null,created_by:currentUser.id});
- if(ins.error)setStatus('lessonStatus',ins.error.message,'error');else{setStatus('lessonStatus','Lesson published successfully.','success');e.target.reset()}
+ const cls=document.getElementById('lessonClass').value;
+ const subjectId=document.getElementById('lessonSubject').value;
+ const chapterChoice=document.getElementById('lessonChapter').value;
+ const title=document.getElementById('lessonTitle').value.trim();
+ if(!subjectId){setStatus('lessonStatus','Please select a subject.','error');return}
+ if(!chapterChoice){setStatus('lessonStatus','Please select a chapter.','error');return}
+ let chapter=null;
+ if(chapterChoice==='__new__'){
+   const chapterTitle=prompt('Enter the new chapter name:');
+   if(!chapterTitle||!chapterTitle.trim()){setStatus('lessonStatus','New chapter name is required.','error');return}
+   const c=await sb.from('chapters').insert({subject_id:subjectId,class_name:cls,title:chapterTitle.trim()}).select().single();
+   if(c.error){setStatus('lessonStatus',c.error.message,'error');return}
+   chapter=c.data;
+ }else{
+   const c=await sb.from('chapters').select('*').eq('id',chapterChoice).maybeSingle();
+   if(c.error||!c.data){setStatus('lessonStatus',c.error?.message||'Chapter not found.','error');return}
+   chapter=c.data;
+ }
+ let notesUrl=document.getElementById('lessonNotes').value.trim()||null;
+ try{
+   const nf=document.getElementById('lessonNotesFile')?.files[0];
+   if(nf)notesUrl=await uploadContentFile(nf,'notes');
+ }catch(err){setStatus('lessonStatus',err.message,'error');return}
+ const ins=await sb.from('lessons').insert({
+   chapter_id:chapter.id,
+   title,
+   video_url:document.getElementById('lessonVideo').value.trim()||null,
+   notes_url:notesUrl,
+   homework:document.getElementById('lessonHomework').value.trim()||null,
+   created_by:currentUser.id
+ });
+ if(ins.error)setStatus('lessonStatus',ins.error.message,'error');
+ else{setStatus('lessonStatus','Lesson published successfully.','success');e.target.reset();setupTeacherContentForm()}
 }
+
 function askDoubt(){const q=document.getElementById('doubtText').value.trim();document.getElementById('doubtAnswer').textContent=q?'AI Edge Function connection is the next backend step; the portal UI is ready for it.':'Type your question first.'}
 
 document.getElementById('leaveStart')?.addEventListener('change',updateLeaveDays);
