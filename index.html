@@ -34,25 +34,21 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
 .quote{font-size:18px;line-height:1.8;color:#344054}
 .placeholder-note{font-size:12px;color:var(--muted);margin-top:8px}
 @media(max-width:700px){.identity-grid{grid-template-columns:1fr}.message-grid{grid-template-columns:1fr}.principal-photo{margin:auto}}
-
-.ai-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
-.ai-tab{padding:11px 15px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:800}
-.ai-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.ai-panel{padding:20px;border:1px solid var(--line);border-radius:20px;background:#fff}
-.ai-answer{margin-top:16px;padding:18px;border-radius:16px;background:#f5f7ff;line-height:1.75;white-space:pre-wrap}
-.ai-meta{font-size:12px;color:var(--muted);margin-top:8px}
 </style>
 </head>
 <body>
 <header>
   <div class="container nav">
     <button class="brand" onclick="showPage('home')" style="background:none;text-align:left">
-      <span class="logo">🏫</span><span>MAHATMA GANDHI GOVERNMENT SCHOOL <small>Jato Ki Dhani • MGGS JKD</small></span>
+      <span class="logo">🎓</span><span>MGGS <small>Mahatma Gandhi Government School</small></span>
     </button>
     <button class="menu" onclick="toggleMenu()">☰</button>
     <nav id="navlinks" class="navlinks">
       <button onclick="showPage('home')">Home</button>
       <button onclick="showPage('study')">Study Hub</button>
+      <button onclick="showPage('attendance')">Attendance</button>
+      <button onclick="showPage('ai')">AI Doubt</button>
+      <button onclick="showPage('leave')">Leave</button>
       <button onclick="showPage('notices')">Notices</button>
       <button onclick="showPage('results')">Results</button>
       <button onclick="showPage('admission')">Admission</button>
@@ -60,7 +56,7 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
       <button onclick="showPage('holidays')">Holidays</button>
       <button onclick="showPage('gallery')">Gallery</button>
       <button onclick="showPage('contact')">Contact</button>
-      <button id="loginNav" onclick="openAuth()" class="primary">Student / Staff Login</button>
+      <button id="adminNav" onclick="showPage('teacher')" class="primary hidden">⚙️ Admin Panel</button><button id="loginNav" onclick="openAuth()" class="primary">Student / Staff Login</button>
       <button id="logoutNav" onclick="logout()" class="secondary hidden">Logout</button>
     </nav>
   </div>
@@ -82,6 +78,8 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
       <div class="quick">
         <button onclick="showPage('study')"><span>📚</span>Classes & Lessons</button>
         <button onclick="showPage('notices')"><span>📢</span>Notices</button>
+        <button onclick="showPage('attendance')"><span>📅</span>Attendance</button>
+        <button onclick="showPage('leave')"><span>📝</span>Leave Application</button>
         <button onclick="showPage('results')"><span>📊</span>Results</button>
         <button onclick="showPage('admission')"><span>📝</span>Admission</button>
         <button onclick="showPage('holidays')"><span>🗓️</span>Holidays</button>
@@ -96,59 +94,14 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
   <div class="container">
     <div class="school-identity">
       <div class="identity-grid">
-        <div class="identity-side">
-          <div>
-            <div style="font-size:62px">🏛️</div>
-            <strong>Ashoka Stambh</strong>
-            <div class="placeholder-note">Official school image can be uploaded by Admin</div>
-          </div>
-        </div>
-        <div class="identity-center">
-          <div class="identity-mark">MGGS</div>
-          <h2>MAHATMA GANDHI<br>GOVERNMENT SCHOOL</h2>
-          <p>Jato Ki Dhani • Study & School Portal</p>
-          <div style="font-size:55px;margin-top:12px">🪷</div>
-          <strong>Maa Saraswati</strong>
-          <div class="placeholder-note">Official image can be uploaded by Admin</div>
-        </div>
-        <div class="identity-side">
-          <div>
-            <div style="font-size:62px">◉</div>
-            <strong>MGGS JKD</strong>
-            <div class="placeholder-note">Official circular emblem/logo can be uploaded by Admin</div>
-          </div>
-        </div>
+        <div class="identity-side"><div><div style="font-size:62px">🏛️</div><strong>Ashoka Stambh</strong><div class="placeholder-note">Official school image can be uploaded by Admin</div></div></div>
+        <div class="identity-center"><div class="identity-mark">MGGS</div><h2>MAHATMA GANDHI<br>GOVERNMENT SCHOOL</h2><p>Jato Ki Dhani • Study & School Portal</p><div style="font-size:55px;margin-top:12px">🪷</div><strong>Maa Saraswati</strong><div class="placeholder-note">Official image can be uploaded by Admin</div></div>
+        <div class="identity-side"><div><div style="font-size:62px">◉</div><strong>MGGS JKD</strong><div class="placeholder-note">Official circular emblem/logo can be uploaded by Admin</div></div></div>
       </div>
     </div>
-
-    <div class="home-section">
-      <div class="card">
-        <div class="page-head" style="margin-bottom:16px">
-          <div><h2>Principal's Message</h2><p>Welcome message from the school leadership.</p></div>
-        </div>
-        <div class="message-grid">
-          <div class="principal-photo">👤</div>
-          <div>
-            <p class="quote">“Education is the foundation for knowledge, values, confidence and a brighter future. This portal brings our students' learning resources and essential school services together in one accessible place.”</p>
-            <strong>Principal</strong>
-            <div class="placeholder-note">Principal photo and official message can be updated by Admin.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="home-section">
-      <div class="card">
-        <div class="page-head" style="margin-bottom:12px">
-          <div><h2>उद्देश्य • About the School</h2><p>The school's purpose and educational vision.</p></div>
-        </div>
-        <p class="quote">The school portal is designed to support accessible learning, regular communication, academic practice and useful student services. Official school-specific information, objectives and achievements can be published here by the Principal/Admin.</p>
-        <div class="placeholder-note">School-specific facts and the official objective statement should be entered by the school administration rather than assumed.</div>
-      </div>
-    </div>
-
-    <div class="page-head" style="margin-top:34px"><div><h2>Explore the portal</h2><p>Everything important, organized in one place.</p></div></div>
-    <div class="home-section"><div class="card"><h3>📸 School Gallery</h3><p class="muted">School activities, events and campus photographs can be published by Admin.</p><button class="secondary" onclick="showPage('gallery')">Open Gallery →</button></div></div>
+    <div class="home-section"><div class="card"><div class="page-head" style="margin-bottom:16px"><div><h2>Principal's Message</h2><p>Welcome message from the school leadership.</p></div></div><div class="message-grid"><div class="principal-photo">👤</div><div><p class="quote">“Education is the foundation for knowledge, values, confidence and a brighter future. This portal brings our students' learning resources and essential school services together in one accessible place.”</p><strong>Principal</strong><div class="placeholder-note">Principal photo and official message can be updated by Admin.</div></div></div></div></div>
+    <div class="home-section"><div class="card"><div class="page-head" style="margin-bottom:12px"><div><h2>उद्देश्य • About the School</h2><p>The school's purpose and educational vision.</p></div></div><p class="quote">The school portal is designed to support accessible learning, regular communication, academic practice and useful student services. Official school-specific information, objectives and achievements can be published here by the Principal/Admin.</p><div class="placeholder-note">School-specific facts and the official objective statement can be entered by school administration.</div></div></div>
+    <div class="page-head"><div><h2>Explore the portal</h2><p>Everything important, organized in one place.</p></div></div>
     <div class="grid">
       <button class="card feature" onclick="showPage('study')" style="text-align:left"><div class="icon">📖</div><h3>Study Hub</h3><p class="muted">Classes, subjects, chapters, lessons, notes, videos and practice.</p></button>
       <button class="card feature" onclick="showPage('notices')" style="text-align:left"><div class="icon">📢</div><h3>Notices</h3><p class="muted">School announcements and important updates.</p></button>
@@ -230,6 +183,70 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
   <div class="container">
     <div class="page-head"><div><h2>📞 Contact</h2><p>Official school contact details can be added here.</p></div></div>
     <div class="card"><h3>Mahatma Gandhi Government School</h3><p class="muted">School address, official phone number, email and other contact details will be displayed here once the official information is entered by the administrator.</p></div>
+  </div>
+</section>
+
+
+<section id="attendance" class="page">
+  <div class="container">
+    <div class="page-head"><div><h2>📅 Attendance</h2><p>View attendance history. Approved staff can mark attendance.</p></div></div>
+    <div id="attendanceGate" class="card"></div>
+    <div id="attendanceStudentBox" class="card hidden">
+      <div class="page-head"><div><h3>My Attendance</h3><p>Daily record and attendance percentage.</p></div></div>
+      <div id="attendanceSummary" class="grid"></div>
+      <div id="attendanceList"></div>
+    </div>
+    <div id="attendanceStaffBox" class="card hidden">
+      <h3>Mark Daily Attendance</h3>
+      <form id="attendanceForm" class="form-grid">
+        <div><label>Student ID</label><input id="attendanceStudentId" required placeholder="Student user ID"></div>
+        <div><label>Date</label><input id="attendanceDate" type="date" required></div>
+        <div><label>Status</label><select id="attendanceStatus"><option>present</option><option>absent</option><option>late</option><option>leave</option></select></div>
+        <button class="primary">Save Attendance</button>
+      </form>
+      <div id="attendanceStatusMsg" class="status"></div>
+    </div>
+  </div>
+</section>
+
+<section id="leave" class="page">
+  <div class="container">
+    <div class="page-head"><div><h2>📝 Leave Application</h2><p>Submit an absence request with the reason and supporting document.</p></div></div>
+    <div class="card">
+      <form id="leaveForm" class="form-grid">
+        <div><label>Leave from</label><input id="leaveStart" type="date" required></div>
+        <div><label>Leave to</label><input id="leaveEnd" type="date" required></div>
+        <div><label>Leave days</label><input id="leaveDays" readonly></div>
+        <div class="full"><label>Reason</label><textarea id="leaveReason" required placeholder="Why will you be absent?"></textarea></div>
+        <div class="full"><label>Supporting application / document</label><input id="leaveFile" type="file" accept=".pdf,image/*"></div>
+        <button class="primary">Submit Leave Application</button>
+      </form>
+      <div id="leaveStatus" class="status"></div>
+    </div>
+    <div class="card">
+      <h3>My Applications</h3>
+      <div id="leaveList"></div>
+    </div>
+  </div>
+</section>
+
+
+<section id="ai" class="page">
+  <div class="container">
+    <div class="page-head"><div><h2>🤖 AI Study Assistant</h2><p>Ask a specific question or get a guided chapter explanation.</p></div></div>
+    <div class="card">
+      <h3>Explain this chapter with AI</h3>
+      <p class="muted">When a chapter is selected, this uses a pre-filled study instruction to explain the complete chapter in student-friendly language.</p>
+      <button class="primary" onclick="explainCurrentChapter()">✨ Explain this chapter</button>
+      <div id="chapterAIAnswer" class="ai-answer">Select a chapter from Study Hub first.</div>
+      <div id="aiStatus" class="status"></div>
+    </div>
+    <div class="card">
+      <h3>Ask AI a specific question</h3>
+      <textarea id="portalAIQuestion" placeholder="Ask your doubt in your own words…"></textarea>
+      <button class="primary" onclick="askPortalAI()">Ask AI →</button>
+      <div id="portalAIAnswer" class="ai-answer">Your answer will appear here.</div>
+    </div>
   </div>
 </section>
 
@@ -320,6 +337,18 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
       <div id="approvalPanel" class="card hidden" style="margin-top:20px">
         <h4>🔐 Pending account requests</h4>
         <div id="requestList" class="list"><div class="empty">Loading requests…</div></div>
+        <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:18px">
+          <h4>👩‍🏫 Teacher / Staff Assignments</h4>
+          <p class="muted">Principal/Admin can assign an approved teacher to a class and subject.</p>
+          <form onsubmit="assignTeacher(event)" class="grid2">
+            <select id="assignTeacher" required><option value="">Select approved teacher</option></select>
+            <select id="assignClass" required><option value="">Class</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+            <input id="assignSubject" placeholder="Subject" required>
+            <button class="primary">Assign Teacher</button>
+          </form>
+          <div id="assignmentStatus" class="status"></div>
+          <div id="assignmentList" class="list"><div class="empty">Loading assignments…</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -365,6 +394,8 @@ function showPage(id){
  document.getElementById('navlinks').classList.remove('open');
  window.scrollTo({top:0,behavior:'smooth'});
  if(id==='study')loadStudy();
+ if(id==='attendance')loadAttendance();
+ if(id==='leave')loadLeaveApplications();
  if(id==='notices')loadNotices();
  if(id==='staff')loadStaff();
  if(id==='holidays')loadHolidays();
@@ -408,7 +439,10 @@ async function initSession(){
   }
   if(isManagement()){
     document.getElementById('approvalPanel').classList.remove('hidden');
+    document.getElementById('adminNav').classList.remove('hidden');
     loadAccountRequests();
+    loadTeachersForAssignment();
+    loadTeacherAssignments();
   }
  }
 }
@@ -465,6 +499,29 @@ async function rejectRequest(id,userId){
  if(r.error)alert(r.error.message);else loadAccountRequests();
 }
 
+
+async function loadTeachersForAssignment(){
+ const sel=document.getElementById('assignTeacher'); if(!sel)return;
+ const r=await sb.from('profiles').select('id,name').eq('role','teacher').eq('approval_status','approved').order('name');
+ if(r.error){sel.innerHTML='<option value="">Unable to load teachers</option>';return}
+ sel.innerHTML='<option value="">Select approved teacher</option>'+(r.data||[]).map(t=>`<option value="${t.id}">${esc(t.name||t.id)}</option>`).join('');
+}
+async function assignTeacher(e){
+ e.preventDefault(); setStatus('assignmentStatus','Assigning…');
+ const teacher_id=document.getElementById('assignTeacher').value;
+ const class_name=document.getElementById('assignClass').value;
+ const subject_name=document.getElementById('assignSubject').value.trim();
+ if(!teacher_id||!class_name||!subject_name){setStatus('assignmentStatus','Select teacher, class and subject.','error');return}
+ const r=await sb.from('teacher_assignments').insert({teacher_id,class_name,subject_name,assigned_by:currentUser.id});
+ if(r.error)setStatus('assignmentStatus',r.error.message,'error');
+ else{setStatus('assignmentStatus','Teacher assigned successfully.','success');e.target.reset();loadTeacherAssignments();}
+}
+async function loadTeacherAssignments(){
+ const box=document.getElementById('assignmentList'); if(!box)return;
+ const r=await sb.from('teacher_assignments').select('id,class_name,subject_name,teacher_id,profiles(name)').order('created_at',{ascending:false});
+ if(r.error){box.innerHTML='<div class="status error">'+esc(r.error.message)+'</div>';return}
+ box.innerHTML=r.data?.length?r.data.map(a=>`<div class="card"><strong>${esc(a.profiles?.name||a.teacher_id)}</strong><p class="muted">Class ${esc(a.class_name)} · ${esc(a.subject_name)}</p></div>`).join(''):'<div class="empty">No teacher assignments yet.</div>';
+}
 async function loadStudy(){
  const root=document.getElementById('studyRoot');
  root.innerHTML=`<div class="pillrow">${[6,7,8,9,10].map(c=>`<button class="pill ${String(c)===String(selectedClass)?'active':''}" onclick="selectClass('${c}')">Class ${c}</button>`).join('')}</div><div id="studyContent" class="card"><div class="empty">Loading subjects…</div></div>`;
@@ -484,62 +541,12 @@ async function openSubject(id,name){
 }
 async function openChapter(id,title){
  const root=document.getElementById('studyRoot');
- root.innerHTML=`<button class="back" onclick="loadStudy()">← Study Hub</button>
- <div class="page-head"><div><h2>📖 ${esc(title)}</h2><p>Chapter resources and AI learning tools</p></div></div>
- <div class="ai-tabs">
-   <button class="ai-tab active" id="aiTabExplain" onclick="switchAI('explain')">✨ Explain this chapter</button>
-   <button class="ai-tab" id="aiTabAsk" onclick="switchAI('ask')">🤖 Ask AI</button>
- </div>
- <div id="aiExplainPanel" class="ai-panel">
-   <h3>✨ Explain this full chapter by AI</h3>
-   <p class="muted">One touch gives a student-friendly explanation of the complete chapter, based on the chapter's published material.</p>
-   <button class="primary" onclick="explainChapter(${id},'${esc(title)}')">✨ Explain Full Chapter</button>
-   <div class="ai-meta">The explanation prompt is pre-filled by the portal so students do not need to write instructions.</div>
-   <div id="chapterExplanation"></div>
- </div>
- <div id="aiAskPanel" class="ai-panel hidden">
-   <h3>🤖 Ask AI about this chapter</h3>
-   <p class="muted">Ask a specific doubt in your own words.</p>
-   <textarea id="chapterDoubt" placeholder="Example: Explain this topic with a simple example…"></textarea>
-   <button class="primary" onclick="chapterAsk(${id},'${esc(title)}')">Ask AI</button>
-   <div id="chapterAnswer"></div>
- </div>
- <div class="page-head" style="margin-top:24px"><div><h3>📚 Chapter resources</h3><p>PDF notes, videos, homework and other published material.</p></div></div>
- <div id="lessonList" class="list"><div class="empty">Loading lessons…</div></div>`;
+ root.innerHTML=`<button class="back" onclick="loadStudy()">← Study Hub</button><div class="page-head"><div><h2>📖 ${esc(title)}</h2><p>Lessons, notes, videos and practice</p></div></div><div id="lessonList" class="list"><div class="empty">Loading lessons…</div></div><div class="card ai"><h3>🤖 AI Doubt Solver</h3><p>Ask a question about this chapter.</p><textarea id="chapterDoubt" placeholder="Type your doubt…"></textarea><button class="primary" onclick="chapterAsk()">Ask</button><div id="chapterAnswer" style="margin-top:10px"></div></div>`;
  const r=await sb.from('lessons').select('*').eq('chapter_id',id).order('created_at',{ascending:false});
  const list=document.getElementById('lessonList');
- list.innerHTML=r.data?.length?r.data.map(l=>`<div class="lesson"><div class="icon">🎓</div><div><strong>${esc(l.title)}</strong><span class="muted small">${esc(l.description||'Study lesson')}</span></div><div class="lesson-actions">${l.video_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.video_url)}">🎥 Video</a>`:''}${l.notes_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.notes_url)}">📑 Notes</a>`:''}${l.homework?`<button class="tiny" onclick="alert('${esc(l.homework).replace(/'/g,"\\'")}')">📝 Practice</button>`:''}<button class="tiny" onclick="switchAI('ask');document.getElementById('chapterDoubt').value='Explain ${esc(l.title)} in simple language with an example.'">🤖 Explain</button></div></div>`).join(''):'<div class="empty">No lessons published yet.</div>';
+ list.innerHTML=r.data?.length?r.data.map(l=>`<div class="lesson"><div class="icon">🎓</div><div><strong>${esc(l.title)}</strong><span class="muted small">${esc(l.description||'Study lesson')}</span></div><div class="lesson-actions">${l.video_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.video_url)}">🎥 Video</a>`:''}${l.notes_url?`<a class="tiny" target="_blank" rel="noopener" href="${esc(l.notes_url)}">📑 Notes</a>`:''}${l.homework?`<button class="tiny" onclick="alert('${esc(l.homework).replace(/'/g,"\\'")}')">📝 Practice</button>`:''}</div></div>`).join(''):'<div class="empty">No lessons published yet.</div>';
 }
-function switchAI(which){
- const ex=document.getElementById('aiExplainPanel'), ask=document.getElementById('aiAskPanel');
- const te=document.getElementById('aiTabExplain'), ta=document.getElementById('aiTabAsk');
- if(which==='explain'){ex.classList.remove('hidden');ask.classList.add('hidden');te.classList.add('active');ta.classList.remove('active')}
- else{ex.classList.add('hidden');ask.classList.remove('hidden');te.classList.remove('active');ta.classList.add('active')}
-}
-async function callPortalAI(payload, outputId){
- const out=document.getElementById(outputId);
- out.innerHTML='<div class="status">🤖 AI is preparing the explanation…</div>';
- try{
-   const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-   const data=await r.json().catch(()=>({}));
-   if(!r.ok) throw new Error(data.error||'AI service is not configured yet.');
-   out.innerHTML=`<div class="ai-answer">${esc(data.answer||'No answer returned.')}</div>`;
- }catch(e){
-   out.innerHTML=`<div class="status error">AI service: ${esc(e.message)}<br><span class="small">The study portal is ready for the secure AI backend connection.</span></div>`;
- }
-}
-async function explainChapter(id,title){
- const r=await sb.from('lessons').select('title,description,homework').eq('chapter_id',id).order('created_at',{ascending:true});
- const material=(r.data||[]).map(x=>`Lesson: ${x.title}\n${x.description||''}\nPractice: ${x.homework||''}`).join('\n\n');
- const prompt=`Explain the full school chapter "${title}" for the student. Use simple age-appropriate language, organize the explanation into clear concepts and examples, include important points and a short recap. Base the explanation on the published chapter material below and do not invent school-specific material.\n\n${material}`;
- await callPortalAI({mode:'explain_chapter',chapter_id:id,chapter_title:title,prompt},'chapterExplanation');
-}
-async function chapterAsk(id,title){
- const q=document.getElementById('chapterDoubt').value.trim();
- if(!q){document.getElementById('chapterAnswer').innerHTML='<div class="status">Type a question first.</div>';return}
- const prompt=`Answer this student's question about the chapter "${title}" clearly and at an age-appropriate level. Show steps/examples where useful. Question: ${q}`;
- await callPortalAI({mode:'chapter_question',chapter_id:id,chapter_title:title,prompt},'chapterAnswer');
-}
+function chapterAsk(){const q=document.getElementById('chapterDoubt').value.trim();document.getElementById('chapterAnswer').innerHTML=q?`<div class="status">Your question is saved in this session. Connect the secure AI Edge Function to generate a live AI answer.</div>`:'<div class="status">Type a question first.</div>'}
 
 async function loadNotices(){
  const box=document.getElementById('noticesList');box.innerHTML='<div class="empty">Loading…</div>';
@@ -556,6 +563,64 @@ async function loadStaff(){const box=document.getElementById('staffList');const 
 async function loadHolidays(){const box=document.getElementById('holidayList');const r=await sb.from('holidays').select('*').order('holiday_date');box.innerHTML=r.data?.length?r.data.map(h=>`<div class="card"><div class="icon">🗓️</div><h3>${esc(h.title)}</h3><p><strong>${fmt(h.holiday_date)}</strong></p><p class="muted">${esc(h.description||'')}</p></div>`).join(''):'<div class="empty">No holidays published yet.</div>'}
 async function loadGallery(){const box=document.getElementById('galleryList');const r=await sb.from('gallery').select('*').order('created_at',{ascending:false});box.innerHTML=r.data?.length?r.data.map(g=>`<div class="card"><img src="${esc(g.image_url)}" alt="${esc(g.title||'MGGS')}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:15px"><h3>${esc(g.title||'School Gallery')}</h3></div>`).join(''):'<div class="empty">No gallery photos published yet.</div>'}
 
+
+async function explainCurrentChapter(){
+  if(!selectedChapter){setStatus('aiStatus','Open a chapter first.','error');return}
+  const box=document.getElementById('chapterAIAnswer'); box.textContent='Generating a simple full-chapter explanation…';
+  const prompt=`Explain this school chapter for a student in simple language. Cover the main ideas, important terms, examples, key points to remember, and a short revision summary. Chapter: ${selectedChapter.title||''}. Subject: ${selectedSubject?.name||''}. Class: ${selectedClass}.`;
+  try{
+    const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'explain',prompt,chapter:selectedChapter})});
+    const j=await r.json(); if(!r.ok) throw new Error(j.error||'AI service is not configured yet.');
+    box.textContent=j.answer||'No answer returned.';
+  }catch(err){box.textContent=err.message}
+}
+async function askPortalAI(){
+  const q=document.getElementById('portalAIQuestion').value.trim(); const box=document.getElementById('portalAIAnswer');
+  if(!q){box.textContent='Type your question first.';return}
+  box.textContent='Thinking…';
+  try{
+    const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'question',prompt:q,chapter:selectedChapter||null})});
+    const j=await r.json(); if(!r.ok) throw new Error(j.error||'AI service is not configured yet.');
+    box.textContent=j.answer||'No answer returned.';
+  }catch(err){box.textContent=err.message}
+}
+function updateLeaveDays(){
+ const a=document.getElementById('leaveStart').value,b=document.getElementById('leaveEnd').value;
+ if(a&&b){const d=Math.round((new Date(b)-new Date(a))/86400000)+1;document.getElementById('leaveDays').value=d>0?d:''}else document.getElementById('leaveDays').value='';
+}
+async function loadAttendance(){
+ const gate=document.getElementById('attendanceGate'); const sbox=document.getElementById('attendanceStudentBox'); const tbox=document.getElementById('attendanceStaffBox');
+ if(!currentUser){gate.innerHTML='<p>Please login to view attendance.</p>';sbox.classList.add('hidden');tbox.classList.add('hidden');return}
+ gate.innerHTML=`<p>Logged in as <strong>${esc(currentProfile?.name||currentUser.email)}</strong>.</p>`;
+ sbox.classList.remove('hidden'); tbox.classList.toggle('hidden',!isStaff());
+ const r=await sb.from('attendance').select('*').eq('student_id',currentUser.id).order('attendance_date',{ascending:false});
+ if(r.error){document.getElementById('attendanceList').innerHTML='<div class="empty">'+esc(r.error.message)+'</div>';return}
+ const rows=r.data||[], present=rows.filter(x=>x.status==='present'||x.status==='late').length, pct=rows.length?Math.round(present/rows.length*100):0;
+ document.getElementById('attendanceSummary').innerHTML=`<div class="card"><strong>${rows.length}</strong><p class="muted">Recorded days</p></div><div class="card"><strong>${present}</strong><p class="muted">Present/Late</p></div><div class="card"><strong>${pct}%</strong><p class="muted">Attendance</p></div>`;
+ document.getElementById('attendanceList').innerHTML=rows.length?rows.map(x=>`<div class="list-row"><strong>${fmt(x.attendance_date)}</strong><span>${esc(x.status)}</span></div>`).join(''):'<div class="empty">No attendance records yet.</div>';
+}
+async function saveAttendance(e){
+ e.preventDefault(); if(!isStaff())return;
+ const r=await sb.from('attendance').upsert({student_id:document.getElementById('attendanceStudentId').value.trim(),attendance_date:document.getElementById('attendanceDate').value,status:document.getElementById('attendanceStatus').value,marked_by:currentUser.id},{onConflict:'student_id,attendance_date'});
+ setStatus('attendanceStatusMsg',r.error?r.error.message:'Attendance saved successfully.',r.error?'error':'success');
+}
+async function submitLeave(e){
+ e.preventDefault(); if(!currentUser){setStatus('leaveStatus','Please login first.','error');return}
+ const start=document.getElementById('leaveStart').value,end=document.getElementById('leaveEnd').value,reason=document.getElementById('leaveReason').value.trim();
+ if(!start||!end||new Date(end)<new Date(start)){setStatus('leaveStatus','Please select a valid date range.','error');return}
+ let url=null; const f=document.getElementById('leaveFile').files[0];
+ try{if(f)url=await uploadContentFile(f,'leave')}catch(err){setStatus('leaveStatus',err.message,'error');return}
+ const days=Math.round((new Date(end)-new Date(start))/86400000)+1;
+ const r=await sb.from('leave_applications').insert({student_id:currentUser.id,start_date:start,end_date:end,leave_days:days,reason,application_url:url});
+ if(r.error)setStatus('leaveStatus',r.error.message,'error');else{setStatus('leaveStatus','Leave application submitted for approval.','success');e.target.reset();updateLeaveDays();loadLeaveApplications()}
+}
+async function loadLeaveApplications(){
+ const box=document.getElementById('leaveList'); if(!currentUser){box.innerHTML='<div class="empty">Login to view applications.</div>';return}
+ const r=await sb.from('leave_applications').select('*').eq('student_id',currentUser.id).order('created_at',{ascending:false});
+ if(r.error){box.innerHTML='<div class="empty">'+esc(r.error.message)+'</div>';return}
+ box.innerHTML=r.data?.length?r.data.map(x=>`<div class="card"><strong>${fmt(x.start_date)} → ${fmt(x.end_date)}</strong><p>${esc(x.reason)}</p><p>Status: <strong>${esc(x.status)}</strong></p>${x.application_url?`<a href="${esc(x.application_url)}" target="_blank">Open document</a>`:''}</div>`).join(''):'<div class="empty">No applications yet.</div>';
+}
+
 async function publishLesson(e){
  e.preventDefault();setStatus('lessonStatus','Publishing…');
  const cls=document.getElementById('lessonClass').value,subjectName=document.getElementById('lessonSubject').value.trim(),chapterTitle=document.getElementById('lessonChapter').value.trim();
@@ -571,6 +636,11 @@ async function publishLesson(e){
  if(ins.error)setStatus('lessonStatus',ins.error.message,'error');else{setStatus('lessonStatus','Lesson published successfully.','success');e.target.reset()}
 }
 function askDoubt(){const q=document.getElementById('doubtText').value.trim();document.getElementById('doubtAnswer').textContent=q?'AI Edge Function connection is the next backend step; the portal UI is ready for it.':'Type your question first.'}
+
+document.getElementById('leaveStart')?.addEventListener('change',updateLeaveDays);
+document.getElementById('leaveEnd')?.addEventListener('change',updateLeaveDays);
+document.getElementById('attendanceForm')?.addEventListener('submit',saveAttendance);
+document.getElementById('leaveForm')?.addEventListener('submit',submitLeave);
 
 (async()=>{await initSession();loadNotices();loadStaff();loadHolidays();loadGallery()})();
 </script>
