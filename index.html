@@ -780,6 +780,32 @@ function setupTeacherContentForm(){
   loadTeacherSubjects();
 }
 
+function askChapterName(){
+  return new Promise(resolve=>{
+    const old=document.getElementById('mggsChapterPrompt');
+    if(old) old.remove();
+    const wrap=document.createElement('div');
+    wrap.id='mggsChapterPrompt';
+    wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;';
+    wrap.innerHTML=`<div style="background:#fff;border-radius:18px;padding:24px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+      <h3 style="margin:0 0 8px">New Chapter</h3>
+      <p style="margin:0 0 14px;color:#64748b">Enter the chapter name.</p>
+      <input id="mggsChapterPromptInput" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #cbd5e1;border-radius:10px" placeholder="Chapter name" autocomplete="off">
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+        <button type="button" id="mggsChapterCancel" style="padding:10px 16px;border:1px solid #cbd5e1;border-radius:10px;background:#fff">Cancel</button>
+        <button type="button" id="mggsChapterSave" style="padding:10px 16px;border:0;border-radius:10px;background:#334155;color:#fff">Continue</button>
+      </div>
+    </div>`;
+    document.body.appendChild(wrap);
+    const input=wrap.querySelector('#mggsChapterPromptInput');
+    const finish=(v)=>{wrap.remove();resolve(v)};
+    wrap.querySelector('#mggsChapterCancel').onclick=()=>finish('');
+    wrap.querySelector('#mggsChapterSave').onclick=()=>finish(input.value);
+    input.addEventListener('keydown',e=>{if(e.key==='Enter')finish(input.value);if(e.key==='Escape')finish('')});
+    setTimeout(()=>input.focus(),0);
+  });
+}
+
 async function publishLesson(e){
  e.preventDefault();
  const status=document.getElementById('lessonStatus');
@@ -804,7 +830,7 @@ async function publishLesson(e){
 
   let chapter=null;
   if(chapterChoice==='__new__'){
-    const chapterTitle=prompt('Enter the new chapter name:');
+    const chapterTitle=await askChapterName();
     if(!chapterTitle||!chapterTitle.trim()){setStatus('lessonStatus','New chapter name is required.','error');return}
     const c=await sb.from('chapters').insert({subject_id:subjectId,class_name:cls,title:chapterTitle.trim()}).select().single();
     if(c.error)throw c.error;
