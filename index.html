@@ -20,13 +20,27 @@ form{display:grid;gap:12px}label{font-size:13px;font-weight:800;color:#344054}in
 footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:30px}.footer-grid p{color:#9ca3af;line-height:1.7}.footer-grid button{display:block;background:none;color:#d1d5db;padding:5px 0}.modal{position:fixed;inset:0;background:#11182799;display:none;place-items:center;padding:20px;z-index:100}.modal.open{display:grid}.modal-box{width:min(470px,100%);background:#fff;border-radius:24px;padding:25px;box-shadow:0 25px 80px #0004}.modal-top{display:flex;justify-content:space-between;align-items:center}.close{background:#f1f3f7;border-radius:10px;padding:8px 11px}.tabs{display:flex;background:#f4f5f8;border-radius:12px;padding:4px;margin:18px 0}.tabs button{flex:1;padding:10px;border-radius:9px;background:transparent;font-weight:800}.tabs button.active{background:#fff;box-shadow:0 2px 8px #0001}.hidden{display:none!important}
 @media(max-width:900px){.hero-grid{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,1fr)}.navlinks{display:none}.navlinks.open{display:flex;position:absolute;top:72px;left:0;right:0;background:#fff;padding:12px 20px;border-bottom:1px solid var(--line);flex-direction:column;align-items:stretch}.menu{display:block}}
 @media(max-width:600px){.container{padding:0 14px}.hero{padding:40px 0}.hero h1{letter-spacing:-1px}.grid,.grid2{grid-template-columns:1fr}.page-head{align-items:start;flex-direction:column}.lesson{align-items:flex-start}.lesson-actions{margin-left:0}.footer-grid{grid-template-columns:1fr}.brand small{display:none}}
+
+.school-identity{margin:0 0 28px;padding:28px;border-radius:28px;background:linear-gradient(135deg,#fff,#eef3ff);border:1px solid var(--line);box-shadow:var(--shadow)}
+.identity-grid{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:18px;align-items:center}
+.identity-side{display:flex;align-items:center;justify-content:center;min-height:150px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px;text-align:center}
+.identity-center{text-align:center}
+.identity-center h2{font-size:clamp(25px,4vw,42px);line-height:1.08;margin:8px 0}
+.identity-center p{margin:0;color:var(--muted);font-weight:750}
+.identity-mark{width:86px;height:86px;margin:auto;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#3157d5,#6c4df6);color:#fff;font-size:40px;box-shadow:0 12px 28px #3157d52e}
+.home-section{margin-top:28px}
+.message-grid{display:grid;grid-template-columns:180px 1fr;gap:24px;align-items:center}
+.principal-photo{width:180px;height:180px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(135deg,#e8edff,#fff);border:1px dashed #aeb9df;font-size:60px}
+.quote{font-size:18px;line-height:1.8;color:#344054}
+.placeholder-note{font-size:12px;color:var(--muted);margin-top:8px}
+@media(max-width:700px){.identity-grid{grid-template-columns:1fr}.message-grid{grid-template-columns:1fr}.principal-photo{margin:auto}}
 </style>
 </head>
 <body>
 <header>
   <div class="container nav">
     <button class="brand" onclick="showPage('home')" style="background:none;text-align:left">
-      <span class="logo">🎓</span><span>MGGS <small>Mahatma Gandhi Government School</small></span>
+      <span class="logo">🏫</span><span>MAHATMA GANDHI GOVERNMENT SCHOOL <small>Jato Ki Dhani • MGGS JKD</small></span>
     </button>
     <button class="menu" onclick="toggleMenu()">☰</button>
     <nav id="navlinks" class="navlinks">
@@ -39,7 +53,7 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
       <button onclick="showPage('holidays')">Holidays</button>
       <button onclick="showPage('gallery')">Gallery</button>
       <button onclick="showPage('contact')">Contact</button>
-      <button id="adminNav" onclick="showPage('teacher')" class="primary hidden">⚙️ Admin Panel</button><button id="loginNav" onclick="openAuth()" class="primary">Student / Staff Login</button>
+      <button id="loginNav" onclick="openAuth()" class="primary">Student / Staff Login</button>
       <button id="logoutNav" onclick="logout()" class="secondary hidden">Logout</button>
     </nav>
   </div>
@@ -49,8 +63,8 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
   <div class="container hero-grid">
     <div>
       <span class="eyebrow">📚 Learn • Practice • Grow</span>
-      <h1>Your school. Your learning hub.</h1>
-      <p>A modern online portal for MGGS students, teachers and school information—bringing study materials, quizzes, notices and school services together in one place.</p>
+      <h1>MAHATMA GANDHI GOVERNMENT SCHOOL</h1>
+      <p><strong>Jato Ki Dhani • MGGS JKD</strong><br>A modern school and study portal bringing learning, school information and student services together in one place.</p>
       <div class="actions">
         <button class="primary" onclick="showPage('study')">Open Study Hub →</button>
         <button class="secondary" onclick="openAuth()">Login / Create Account</button>
@@ -73,7 +87,61 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
 <main>
 <section id="home" class="page active">
   <div class="container">
-    <div class="page-head"><div><h2>Explore the portal</h2><p>Everything important, organized in one place.</p></div></div>
+    <div class="school-identity">
+      <div class="identity-grid">
+        <div class="identity-side">
+          <div>
+            <div style="font-size:62px">🏛️</div>
+            <strong>Ashoka Stambh</strong>
+            <div class="placeholder-note">Official school image can be uploaded by Admin</div>
+          </div>
+        </div>
+        <div class="identity-center">
+          <div class="identity-mark">MGGS</div>
+          <h2>MAHATMA GANDHI<br>GOVERNMENT SCHOOL</h2>
+          <p>Jato Ki Dhani • Study & School Portal</p>
+          <div style="font-size:55px;margin-top:12px">🪷</div>
+          <strong>Maa Saraswati</strong>
+          <div class="placeholder-note">Official image can be uploaded by Admin</div>
+        </div>
+        <div class="identity-side">
+          <div>
+            <div style="font-size:62px">◉</div>
+            <strong>MGGS JKD</strong>
+            <div class="placeholder-note">Official circular emblem/logo can be uploaded by Admin</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-section">
+      <div class="card">
+        <div class="page-head" style="margin-bottom:16px">
+          <div><h2>Principal's Message</h2><p>Welcome message from the school leadership.</p></div>
+        </div>
+        <div class="message-grid">
+          <div class="principal-photo">👤</div>
+          <div>
+            <p class="quote">“Education is the foundation for knowledge, values, confidence and a brighter future. This portal brings our students' learning resources and essential school services together in one accessible place.”</p>
+            <strong>Principal</strong>
+            <div class="placeholder-note">Principal photo and official message can be updated by Admin.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-section">
+      <div class="card">
+        <div class="page-head" style="margin-bottom:12px">
+          <div><h2>उद्देश्य • About the School</h2><p>The school's purpose and educational vision.</p></div>
+        </div>
+        <p class="quote">The school portal is designed to support accessible learning, regular communication, academic practice and useful student services. Official school-specific information, objectives and achievements can be published here by the Principal/Admin.</p>
+        <div class="placeholder-note">School-specific facts and the official objective statement should be entered by the school administration rather than assumed.</div>
+      </div>
+    </div>
+
+    <div class="page-head" style="margin-top:34px"><div><h2>Explore the portal</h2><p>Everything important, organized in one place.</p></div></div>
+    <div class="home-section"><div class="card"><h3>📸 School Gallery</h3><p class="muted">School activities, events and campus photographs can be published by Admin.</p><button class="secondary" onclick="showPage('gallery')">Open Gallery →</button></div></div>
     <div class="grid">
       <button class="card feature" onclick="showPage('study')" style="text-align:left"><div class="icon">📖</div><h3>Study Hub</h3><p class="muted">Classes, subjects, chapters, lessons, notes, videos and practice.</p></button>
       <button class="card feature" onclick="showPage('notices')" style="text-align:left"><div class="icon">📢</div><h3>Notices</h3><p class="muted">School announcements and important updates.</p></button>
@@ -245,18 +313,6 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
       <div id="approvalPanel" class="card hidden" style="margin-top:20px">
         <h4>🔐 Pending account requests</h4>
         <div id="requestList" class="list"><div class="empty">Loading requests…</div></div>
-        <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:18px">
-          <h4>👩‍🏫 Teacher / Staff Assignments</h4>
-          <p class="muted">Principal/Admin can assign an approved teacher to a class and subject.</p>
-          <form onsubmit="assignTeacher(event)" class="grid2">
-            <select id="assignTeacher" required><option value="">Select approved teacher</option></select>
-            <select id="assignClass" required><option value="">Class</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
-            <input id="assignSubject" placeholder="Subject" required>
-            <button class="primary">Assign Teacher</button>
-          </form>
-          <div id="assignmentStatus" class="status"></div>
-          <div id="assignmentList" class="list"><div class="empty">Loading assignments…</div></div>
-        </div>
       </div>
     </div>
   </div>
@@ -345,10 +401,7 @@ async function initSession(){
   }
   if(isManagement()){
     document.getElementById('approvalPanel').classList.remove('hidden');
-    document.getElementById('adminNav').classList.remove('hidden');
     loadAccountRequests();
-    loadTeachersForAssignment();
-    loadTeacherAssignments();
   }
  }
 }
@@ -405,29 +458,6 @@ async function rejectRequest(id,userId){
  if(r.error)alert(r.error.message);else loadAccountRequests();
 }
 
-
-async function loadTeachersForAssignment(){
- const sel=document.getElementById('assignTeacher'); if(!sel)return;
- const r=await sb.from('profiles').select('id,name').eq('role','teacher').eq('approval_status','approved').order('name');
- if(r.error){sel.innerHTML='<option value="">Unable to load teachers</option>';return}
- sel.innerHTML='<option value="">Select approved teacher</option>'+(r.data||[]).map(t=>`<option value="${t.id}">${esc(t.name||t.id)}</option>`).join('');
-}
-async function assignTeacher(e){
- e.preventDefault(); setStatus('assignmentStatus','Assigning…');
- const teacher_id=document.getElementById('assignTeacher').value;
- const class_name=document.getElementById('assignClass').value;
- const subject_name=document.getElementById('assignSubject').value.trim();
- if(!teacher_id||!class_name||!subject_name){setStatus('assignmentStatus','Select teacher, class and subject.','error');return}
- const r=await sb.from('teacher_assignments').insert({teacher_id,class_name,subject_name,assigned_by:currentUser.id});
- if(r.error)setStatus('assignmentStatus',r.error.message,'error');
- else{setStatus('assignmentStatus','Teacher assigned successfully.','success');e.target.reset();loadTeacherAssignments();}
-}
-async function loadTeacherAssignments(){
- const box=document.getElementById('assignmentList'); if(!box)return;
- const r=await sb.from('teacher_assignments').select('id,class_name,subject_name,teacher_id,profiles(name)').order('created_at',{ascending:false});
- if(r.error){box.innerHTML='<div class="status error">'+esc(r.error.message)+'</div>';return}
- box.innerHTML=r.data?.length?r.data.map(a=>`<div class="card"><strong>${esc(a.profiles?.name||a.teacher_id)}</strong><p class="muted">Class ${esc(a.class_name)} · ${esc(a.subject_name)}</p></div>`).join(''):'<div class="empty">No teacher assignments yet.</div>';
-}
 async function loadStudy(){
  const root=document.getElementById('studyRoot');
  root.innerHTML=`<div class="pillrow">${[6,7,8,9,10].map(c=>`<button class="pill ${String(c)===String(selectedClass)?'active':''}" onclick="selectClass('${c}')">Class ${c}</button>`).join('')}</div><div id="studyContent" class="card"><div class="empty">Loading subjects…</div></div>`;
