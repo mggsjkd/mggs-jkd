@@ -198,7 +198,7 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
     </div>
     <div id="attendanceStaffBox" class="card hidden">
       <div class="page-head">
-        <div><h3>🧑‍🏫 Class Attendance</h3><p>Tick a student = Present. Unticked students are marked Absent.</p></div>
+        <div><h3>🧑‍🏫 Class Attendance</h3><p>Har student ke saamne 4 status: Present, Absent, On Leave, ya Left with TC. Save karne par wahi status record hoga.</p></div>
       </div>
       <div class="form-grid">
         <div><label>Assigned Class</label><select id="teacherRosterClass"></select></div>
@@ -914,6 +914,7 @@ async function loadTeacherRoster(){
     box.innerHTML=`<div class="status error">${esc(students.error.message)}</div>`;
     return;
   }
+
   const rows=students.data||[];
   const ids=rows.map(x=>x.id);
   let attendanceMap={};
@@ -929,15 +930,17 @@ async function loadTeacherRoster(){
     box.innerHTML='<div class="empty">No students are currently assigned to this class.</div>';
   }else{
     box.innerHTML=rows.map((st,i)=>{
-      const checked=(attendanceMap[st.id]||'present')!=='absent';
-      const status=attendanceMap[st.id]||'present';
-      return `<div class="card roster-row" style="display:grid;grid-template-columns:55px 1fr auto;align-items:center;gap:12px;margin-bottom:8px;padding:12px">
+      const saved=attendanceMap[st.id]||'present';
+      const status=['present','absent','leave'].includes(saved)?saved:'present';
+      return `<div class="card roster-row" style="display:grid;grid-template-columns:55px minmax(180px,1fr) minmax(260px,360px);align-items:center;gap:12px;margin-bottom:8px;padding:12px">
         <strong>${i+1}</strong>
         <div><strong>${esc(st.name||'Unnamed student')}</strong><div class="muted small">${esc(st.id)}</div></div>
-        <label style="display:flex;align-items:center;gap:8px;font-weight:700">
-          <input class="roster-check" type="checkbox" data-student-id="${esc(st.id)}" ${checked?'checked':''} style="width:22px;height:22px">
-          <span>${checked ? (status==='late'?'Late':'Present') : 'Absent'}</span>
-        </label>
+        <div class="roster-status-group" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input class="roster-status" type="radio" name="status_${esc(st.id)}" value="present" data-student-id="${esc(st.id)}" ${status==='present'?'checked':''}> Present</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input class="roster-status" type="radio" name="status_${esc(st.id)}" value="absent" data-student-id="${esc(st.id)}" ${status==='absent'?'checked':''}> Absent</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input class="roster-status" type="radio" name="status_${esc(st.id)}" value="leave" data-student-id="${esc(st.id)}" ${status==='leave'?'checked':''}> On Leave</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input class="roster-status" type="radio" name="status_${esc(st.id)}" value="left_tc" data-student-id="${esc(st.id)}"> Left with TC</label>
+        </div>
       </div>`;
     }).join('');
   }
@@ -950,6 +953,7 @@ async function loadTeacherRoster(){
   }
   await loadRosterAddCandidates(cls,rows.map(x=>x.id));
 }
+
 async function loadRosterAddCandidates(cls,existingIds){
   const el=document.getElementById('rosterAddStudent'); if(!el)return;
   const r=await sb.from('profiles').select('id,name,class_name,role').eq('role','student').order('name');
@@ -958,6 +962,7 @@ async function loadRosterAddCandidates(cls,existingIds){
   el.innerHTML='<option value="">Select existing student account</option>'+
     available.map(s=>`<option value="${esc(s.id)}">${esc(s.name||s.id)}${s.class_name?' · current Class '+esc(s.class_name):' · Unassigned'}</option>`).join('');
 }
+
 async function addStudentToRoster(){
   const cls=document.getElementById('teacherRosterClass')?.value;
   const id=document.getElementById('rosterAddStudent')?.value;
@@ -968,6 +973,7 @@ async function addStudentToRoster(){
   setStatus('rosterManageStatus','Student added to Class '+cls+'.','success');
   await loadTeacherRoster();
 }
+
 async function processStudentTC(id,name){
   const cls=document.getElementById('teacherRosterClass')?.value;
   if(!confirm(`Process TC / remove ${name} from Class ${cls}? This will clear their class assignment.`))return;
@@ -977,26 +983,55 @@ async function processStudentTC(id,name){
   setStatus('rosterManageStatus',`${name} removed from Class ${cls}.`,'success');
   await loadTeacherRoster();
 }
+
 function markAllRoster(checked){
-  document.querySelectorAll('#teacherRoster .roster-check').forEach(x=>x.checked=checked);
+  document.querySelectorAll('#teacherRoster .roster-status[value="present"]').forEach(x=>x.checked=checked);
+  document.querySelectorAll('#teacherRoster .roster-status[value="absent"]').forEach(x=>x.checked=!checked);
 }
+
 async function saveTeacherRosterAttendance(){
   const cls=document.getElementById('teacherRosterClass')?.value;
   const date=document.getElementById('teacherRosterDate')?.value||todayISO();
-  const checks=[...document.querySelectorAll('#teacherRoster .roster-check')];
-  if(!cls||!checks.length){setStatus('teacherRosterStatus','No students to save.','error');return}
+  const rows=[...document.querySelectorAll('#teacherRoster .roster-row')];
+  if(!cls||!rows.length){setStatus('teacherRosterStatus','No students to save.','error');return}
   setStatus('teacherRosterStatus','Saving attendance…');
   const allowed=teacherAssignments.some(a=>String(a.class_name)===String(cls));
   if(!allowed){setStatus('teacherRosterStatus','This class is not assigned to you.','error');return}
-  const payload=checks.map(c=>({
-    student_id:c.dataset.studentId,
-    attendance_date:date,
-    status:c.checked?'present':'absent',
-    marked_by:currentUser.id
-  }));
-  const r=await sb.from('attendance').upsert(payload,{onConflict:'student_id,attendance_date'});
-  if(r.error){setStatus('teacherRosterStatus',r.error.message,'error');return}
-  setStatus('teacherRosterStatus',`Attendance saved for ${payload.length} students: ${payload.filter(x=>x.status==='present').length} Present, ${payload.filter(x=>x.status==='absent').length} Absent.`,'success');
+
+  const payload=[];
+  const tcIds=[];
+  rows.forEach(row=>{
+    const selected=row.querySelector('.roster-status:checked');
+    if(!selected)return;
+    const status=selected.value;
+    const studentId=selected.dataset.studentId;
+    if(status==='left_tc') tcIds.push(studentId);
+    else payload.push({
+      student_id:studentId,
+      attendance_date:date,
+      status:status,
+      marked_by:currentUser.id
+    });
+  });
+
+  if(payload.length){
+    const r=await sb.from('attendance').upsert(payload,{onConflict:'student_id,attendance_date'});
+    if(r.error){setStatus('teacherRosterStatus',r.error.message,'error');return}
+  }
+
+  if(tcIds.length){
+    const r=await sb.from('profiles').update({class_name:null}).in('id',tcIds).eq('role','student');
+    if(r.error){setStatus('teacherRosterStatus','Attendance saved, but TC update failed: '+r.error.message,'error');return}
+  }
+
+  const counts={
+    present:payload.filter(x=>x.status==='present').length,
+    absent:payload.filter(x=>x.status==='absent').length,
+    leave:payload.filter(x=>x.status==='leave').length,
+    tc:tcIds.length
+  };
+  setStatus('teacherRosterStatus',`Saved: ${counts.present} Present · ${counts.absent} Absent · ${counts.leave} On Leave · ${counts.tc} Left with TC.`,'success');
+  await loadTeacherRoster();
 }
 
 function askDoubt(){const q=document.getElementById('doubtText').value.trim();document.getElementById('doubtAnswer').textContent=q?'AI Edge Function connection is the next backend step; the portal UI is ready for it.':'Type your question first.'}
