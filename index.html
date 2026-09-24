@@ -197,14 +197,45 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
       <div id="attendanceList"></div>
     </div>
     <div id="attendanceStaffBox" class="card hidden">
-      <h3>Mark Daily Attendance</h3>
-      <form id="attendanceForm" class="form-grid">
-        <div><label>Student ID</label><input id="attendanceStudentId" required placeholder="Student user ID"></div>
-        <div><label>Date</label><input id="attendanceDate" type="date" required></div>
-        <div><label>Status</label><select id="attendanceStatus"><option>present</option><option>absent</option><option>late</option><option>leave</option></select></div>
-        <button class="primary">Save Attendance</button>
-      </form>
-      <div id="attendanceStatusMsg" class="status"></div>
+      <div class="page-head">
+        <div><h3>🧑‍🏫 Class Attendance</h3><p>Tick a student = Present. Unticked students are marked Absent.</p></div>
+      </div>
+      <div class="form-grid">
+        <div><label>Assigned Class</label><select id="teacherRosterClass"></select></div>
+        <div><label>Attendance Date</label><input id="teacherRosterDate" type="date"></div>
+      </div>
+      <div class="card" style="margin-top:14px;background:#f8f9ff">
+        <h4 style="margin-top:0">➕ Add Student to This Class</h4>
+        <div class="form-grid">
+          <div><label>Student</label><select id="rosterAddStudent"><option value="">Select student</option></select></div>
+          <button class="secondary" type="button" onclick="addStudentToRoster()">Add Student</button>
+        </div>
+        <div id="rosterManageStatus" class="status"></div>
+      </div>
+      <div id="teacherRoster" class="list" style="margin-top:16px"><div class="empty">Loading student list…</div></div>
+      <div class="toolbar" style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="primary" type="button" onclick="saveTeacherRosterAttendance()">💾 Save Today's Attendance</button>
+        <button class="secondary" type="button" onclick="markAllRoster(true)">☑️ Tick All</button>
+        <button class="secondary" type="button" onclick="markAllRoster(false)">☐ Untick All (Absent)</button>
+      </div>
+      <div id="teacherRosterStatus" class="status"></div>
+
+      <div class="card" style="margin-top:18px;background:#fff8f2">
+        <h4 style="margin-top:0">📄 Transfer / Remove Student</h4>
+        <p class="muted">Use TC/Transfer only when the student should no longer belong to this class.</p>
+        <div id="tcStudentList"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h4 style="margin-top:0">Manual Attendance (fallback)</h4>
+        <form id="attendanceForm" class="form-grid">
+          <div><label>Student ID</label><input id="attendanceStudentId" required placeholder="Student user ID"></div>
+          <div><label>Date</label><input id="attendanceDate" type="date" required></div>
+          <div><label>Status</label><select id="attendanceStatus"><option>present</option><option>absent</option><option>late</option><option>leave</option></select></div>
+          <button class="primary">Save Attendance</button>
+        </form>
+        <div id="attendanceStatusMsg" class="status"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -275,7 +306,12 @@ footer{background:#111827;color:#e5e7eb;padding:38px 0}.footer-grid{display:grid
         <label>Homework / practice</label><textarea id="lessonHomework"></textarea>
         <button class="primary">Publish Lesson</button><div id="lessonStatus" class="status"></div>
       </form></div>
-      <div class="card"><h3>Portal status</h3><p class="muted">Staff can publish study and school content. Principal/Admin approval controls account access.</p><div id="staffStatus" class="status"></div></div>
+      <div class="card"><h3>Portal status</h3><p class="muted">Teachers can publish study lessons only for their assigned class + subject. Principal/Admin can publish across the portal.</p><div id="staffStatus" class="status"></div></div>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <h3>👨‍🎓 My Assigned Class Students</h3>
+      <p class="muted">Teachers can view their assigned-class roster, mark attendance with checkboxes, add existing student accounts, and process a TC/transfer removal.</p>
+      <button class="primary" type="button" onclick="showPage('attendance')">Open Class Student List →</button>
     </div>
 
     <div id="contentAdminPanel" class="card hidden" style="margin-top:20px">
@@ -437,6 +473,8 @@ async function initSession(){
     document.getElementById('contentAdminPanel').classList.remove('hidden');
     document.getElementById('staffStatus').textContent='Signed in as '+currentProfile.role;
     setupTeacherContentForm();
+    await setupTeacherRoster();
+    if(currentProfile.role==='teacher') setTimeout(()=>showPage('attendance'),50);
   }
   if(isManagement()){
     document.getElementById('approvalPanel').classList.remove('hidden');
@@ -645,71 +683,287 @@ async function loadLeaveApplications(){
  box.innerHTML=r.data?.length?r.data.map(x=>`<div class="card"><strong>${fmt(x.start_date)} → ${fmt(x.end_date)}</strong><p>${esc(x.reason)}</p><p>Status: <strong>${esc(x.status)}</strong></p>${x.application_url?`<a href="${esc(x.application_url)}" target="_blank">Open document</a>`:''}</div>`).join(''):'<div class="empty">No applications yet.</div>';
 }
 
+let teacherAssignments=[];
+
+async function loadMyTeacherAssignments(){
+  if(!currentUser)return [];
+  const r=await sb.from('teacher_assignments')
+    .select('id,class_name,subject_name')
+    .eq('teacher_id',currentUser.id)
+    .order('class_name');
+  if(r.error){setStatus('lessonStatus',r.error.message,'error');return []}
+  teacherAssignments=r.data||[];
+  return teacherAssignments;
+}
+
 async function loadTeacherSubjects(){
+  const subjectEl=document.getElementById('lessonSubject');
+  const chapterEl=document.getElementById('lessonChapter');
+  const clsEl=document.getElementById('lessonClass');
+  if(!subjectEl||!chapterEl||!clsEl)return;
+
+  if(isManagement()){
+    clsEl.disabled=false;
+    clsEl.innerHTML='<option value="">Select class</option>'+[6,7,8,9,10].map(c=>`<option value="${c}">Class ${c}</option>`).join('');
+  }else{
+    const assignments=await loadMyTeacherAssignments();
+    const classes=[...new Set(assignments.map(a=>String(a.class_name)))];
+    clsEl.disabled=false;
+    clsEl.innerHTML=classes.length
+      ? '<option value="">Select assigned class</option>'+classes.map(c=>`<option value="${esc(c)}">Class ${esc(c)}</option>`).join('')
+      : '<option value="">No class assigned</option>';
+    if(!classes.length){
+      subjectEl.innerHTML='<option value="">No assigned subjects</option>';
+      chapterEl.innerHTML='<option value="">Assign a class and subject first</option>';
+      return;
+    }
+  }
+  subjectEl.innerHTML='<option value="">Select subject</option>';
+  chapterEl.innerHTML='<option value="">Select a subject first</option>';
+  if(clsEl.value) await loadAssignedSubjects();
+}
+
+async function loadAssignedSubjects(){
+  const cls=document.getElementById('lessonClass')?.value;
   const subjectEl=document.getElementById('lessonSubject');
   const chapterEl=document.getElementById('lessonChapter');
   if(!subjectEl||!chapterEl)return;
   subjectEl.innerHTML='<option value="">Loading subjects…</option>';
   chapterEl.innerHTML='<option value="">Select a subject first</option>';
+  if(!cls){subjectEl.innerHTML='<option value="">Select class first</option>';return}
+
+  if(isManagement()){
+    const r=await sb.from('subjects').select('id,name').order('name');
+    if(r.error){subjectEl.innerHTML='<option value="">Unable to load subjects</option>';setStatus('lessonStatus',r.error.message,'error');return}
+    subjectEl.innerHTML='<option value="">Select subject</option>'+
+      (r.data||[]).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
+    return;
+  }
+
+  const assignments=teacherAssignments.filter(a=>String(a.class_name)===String(cls));
+  const names=[...new Set(assignments.map(a=>a.subject_name.trim().toLowerCase()))];
   const r=await sb.from('subjects').select('id,name').order('name');
   if(r.error){subjectEl.innerHTML='<option value="">Unable to load subjects</option>';setStatus('lessonStatus',r.error.message,'error');return}
-  subjectEl.innerHTML='<option value="">Select subject</option>'+(r.data||[]).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
+  const filtered=(r.data||[]).filter(x=>names.includes(String(x.name).trim().toLowerCase()));
+  subjectEl.innerHTML=filtered.length
+    ? '<option value="">Select assigned subject</option>'+filtered.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')
+    : '<option value="">No assigned subjects for this class</option>';
 }
+
 async function loadTeacherChapters(){
   const cls=document.getElementById('lessonClass')?.value;
   const subjectId=document.getElementById('lessonSubject')?.value;
   const chapterEl=document.getElementById('lessonChapter');
   if(!chapterEl)return;
   chapterEl.innerHTML='<option value="">Loading chapters…</option>';
-  if(!subjectId){chapterEl.innerHTML='<option value="">Select a subject first</option>';return}
+  if(!cls||!subjectId){chapterEl.innerHTML='<option value="">Select class and subject first</option>';return}
+
+  if(!isManagement()){
+    const sub=await sb.from('subjects').select('name').eq('id',subjectId).maybeSingle();
+    const allowed=teacherAssignments.some(a=>String(a.class_name)===String(cls)&&
+      String(a.subject_name).trim().toLowerCase()===String(sub.data?.name||'').trim().toLowerCase());
+    if(!allowed){chapterEl.innerHTML='<option value="">Not assigned to this class/subject</option>';return}
+  }
+
   const r=await sb.from('chapters').select('id,title').eq('class_name',String(cls)).eq('subject_id',subjectId).order('title');
-  if(r.error){chapterEl.innerHTML='<option value="">Unable to load chapters</option>';return}
+  if(r.error){chapterEl.innerHTML='<option value="">Unable to load chapters</option>';setStatus('lessonStatus',r.error.message,'error');return}
   chapterEl.innerHTML='<option value="">Select existing chapter or choose New chapter</option>'+
     '<option value="__new__">＋ New chapter</option>'+
     (r.data||[]).map(x=>`<option value="${esc(x.id)}">${esc(x.title)}</option>`).join('');
 }
+
 function setupTeacherContentForm(){
   const cls=document.getElementById('lessonClass'),subject=document.getElementById('lessonSubject'),chapter=document.getElementById('lessonChapter');
   if(!cls||!subject||!chapter)return;
-  cls.onchange=loadTeacherChapters;
+  cls.onchange=async()=>{await loadAssignedSubjects();await loadTeacherChapters()};
   subject.onchange=loadTeacherChapters;
   loadTeacherSubjects();
 }
+
 async function publishLesson(e){
- e.preventDefault();setStatus('lessonStatus','Publishing…');
- const cls=document.getElementById('lessonClass').value;
- const subjectId=document.getElementById('lessonSubject').value;
- const chapterChoice=document.getElementById('lessonChapter').value;
- const title=document.getElementById('lessonTitle').value.trim();
- if(!subjectId){setStatus('lessonStatus','Please select a subject.','error');return}
- if(!chapterChoice){setStatus('lessonStatus','Please select a chapter.','error');return}
- let chapter=null;
- if(chapterChoice==='__new__'){
-   const chapterTitle=prompt('Enter the new chapter name:');
-   if(!chapterTitle||!chapterTitle.trim()){setStatus('lessonStatus','New chapter name is required.','error');return}
-   const c=await sb.from('chapters').insert({subject_id:subjectId,class_name:cls,title:chapterTitle.trim()}).select().single();
-   if(c.error){setStatus('lessonStatus',c.error.message,'error');return}
-   chapter=c.data;
- }else{
-   const c=await sb.from('chapters').select('*').eq('id',chapterChoice).maybeSingle();
-   if(c.error||!c.data){setStatus('lessonStatus',c.error?.message||'Chapter not found.','error');return}
-   chapter=c.data;
- }
- let notesUrl=document.getElementById('lessonNotes').value.trim()||null;
+ e.preventDefault();
+ const status=document.getElementById('lessonStatus');
+ setStatus('lessonStatus','Publishing…');
  try{
-   const nf=document.getElementById('lessonNotesFile')?.files[0];
-   if(nf)notesUrl=await uploadContentFile(nf,'notes');
- }catch(err){setStatus('lessonStatus',err.message,'error');return}
- const ins=await sb.from('lessons').insert({
-   chapter_id:chapter.id,
-   title,
-   video_url:document.getElementById('lessonVideo').value.trim()||null,
-   notes_url:notesUrl,
-   homework:document.getElementById('lessonHomework').value.trim()||null,
-   created_by:currentUser.id
- });
- if(ins.error)setStatus('lessonStatus',ins.error.message,'error');
- else{setStatus('lessonStatus','Lesson published successfully.','success');e.target.reset();setupTeacherContentForm()}
+  const cls=document.getElementById('lessonClass').value;
+  const subjectId=document.getElementById('lessonSubject').value;
+  const chapterChoice=document.getElementById('lessonChapter').value;
+  const title=document.getElementById('lessonTitle').value.trim();
+  if(!cls){setStatus('lessonStatus','Please select a class.','error');return}
+  if(!subjectId){setStatus('lessonStatus','Please select a subject.','error');return}
+  if(!chapterChoice){setStatus('lessonStatus','Please select a chapter.','error');return}
+  if(!title){setStatus('lessonStatus','Lesson title is required.','error');return}
+
+  if(!isManagement()){
+    const sub=await sb.from('subjects').select('name').eq('id',subjectId).maybeSingle();
+    if(sub.error)throw sub.error;
+    const allowed=teacherAssignments.some(a=>String(a.class_name)===String(cls)&&
+      String(a.subject_name).trim().toLowerCase()===String(sub.data?.name||'').trim().toLowerCase());
+    if(!allowed)throw new Error('You can publish only for your assigned class and subject.');
+  }
+
+  let chapter=null;
+  if(chapterChoice==='__new__'){
+    const chapterTitle=prompt('Enter the new chapter name:');
+    if(!chapterTitle||!chapterTitle.trim()){setStatus('lessonStatus','New chapter name is required.','error');return}
+    const c=await sb.from('chapters').insert({subject_id:subjectId,class_name:cls,title:chapterTitle.trim()}).select().single();
+    if(c.error)throw c.error;
+    chapter=c.data;
+  }else{
+    const c=await sb.from('chapters').select('*').eq('id',chapterChoice).maybeSingle();
+    if(c.error||!c.data)throw new Error(c.error?.message||'Chapter not found.');
+    chapter=c.data;
+  }
+
+  let notesUrl=document.getElementById('lessonNotes').value.trim()||null;
+  const nf=document.getElementById('lessonNotesFile')?.files[0];
+  if(nf)notesUrl=await uploadContentFile(nf,'notes');
+
+  const ins=await sb.from('lessons').insert({
+    chapter_id:chapter.id,
+    title,
+    video_url:document.getElementById('lessonVideo').value.trim()||null,
+    notes_url:notesUrl,
+    homework:document.getElementById('lessonHomework').value.trim()||null,
+    created_by:currentUser.id
+  });
+  if(ins.error)throw ins.error;
+  setStatus('lessonStatus','Lesson published successfully.','success');
+  e.target.reset();
+  await setupTeacherContentForm();
+ }catch(err){
+  setStatus('lessonStatus',err?.message||'Unable to publish lesson.','error');
+ }
+}
+
+
+function todayISO(){
+  const d=new Date();
+  const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);
+  return local.toISOString().slice(0,10);
+}
+async function setupTeacherRoster(){
+  if(!currentUser || !currentProfile || currentProfile.role!=='teacher') return;
+  await loadMyTeacherAssignments();
+  const cls=document.getElementById('teacherRosterClass');
+  if(!cls) return;
+  const classes=[...new Set(teacherAssignments.map(a=>String(a.class_name)))];
+  cls.innerHTML=classes.length
+    ? classes.map(c=>`<option value="${esc(c)}">Class ${esc(c)}</option>`).join('')
+    : '<option value="">No assigned class</option>';
+  const date=document.getElementById('teacherRosterDate');
+  if(date && !date.value) date.value=todayISO();
+  cls.onchange=()=>loadTeacherRoster();
+  if(date) date.onchange=()=>loadTeacherRoster();
+  await loadTeacherRoster();
+}
+async function loadTeacherRoster(){
+  if(!currentProfile || currentProfile.role!=='teacher') return;
+  const cls=document.getElementById('teacherRosterClass')?.value;
+  const date=document.getElementById('teacherRosterDate')?.value||todayISO();
+  const box=document.getElementById('teacherRoster');
+  const tcBox=document.getElementById('tcStudentList');
+  if(!box||!cls)return;
+  box.innerHTML='<div class="empty">Loading students…</div>';
+  if(tcBox)tcBox.innerHTML='<div class="empty">Loading…</div>';
+
+  const allowed=teacherAssignments.some(a=>String(a.class_name)===String(cls));
+  if(!allowed){
+    box.innerHTML='<div class="status error">This class is not assigned to you.</div>'; return;
+  }
+
+  const students=await sb.from('profiles')
+    .select('id,name,approval_status,class_name')
+    .eq('role','student')
+    .eq('class_name',String(cls))
+    .order('name');
+  if(students.error){
+    box.innerHTML=`<div class="status error">${esc(students.error.message)}</div>`;
+    return;
+  }
+  const rows=students.data||[];
+  const ids=rows.map(x=>x.id);
+  let attendanceMap={};
+  if(ids.length){
+    const ar=await sb.from('attendance')
+      .select('student_id,status')
+      .in('student_id',ids)
+      .eq('attendance_date',date);
+    if(!ar.error)(ar.data||[]).forEach(a=>attendanceMap[a.student_id]=a.status);
+  }
+
+  if(!rows.length){
+    box.innerHTML='<div class="empty">No students are currently assigned to this class.</div>';
+  }else{
+    box.innerHTML=rows.map((st,i)=>{
+      const checked=(attendanceMap[st.id]||'present')!=='absent';
+      const status=attendanceMap[st.id]||'present';
+      return `<div class="card roster-row" style="display:grid;grid-template-columns:55px 1fr auto;align-items:center;gap:12px;margin-bottom:8px;padding:12px">
+        <strong>${i+1}</strong>
+        <div><strong>${esc(st.name||'Unnamed student')}</strong><div class="muted small">${esc(st.id)}</div></div>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:700">
+          <input class="roster-check" type="checkbox" data-student-id="${esc(st.id)}" ${checked?'checked':''} style="width:22px;height:22px">
+          <span>${checked ? (status==='late'?'Late':'Present') : 'Absent'}</span>
+        </label>
+      </div>`;
+    }).join('');
+  }
+
+  if(tcBox){
+    tcBox.innerHTML=rows.length?rows.map((st,i)=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px">
+      <span><strong>${i+1}. ${esc(st.name||'Unnamed student')}</strong></span>
+      <button class="secondary" type="button" onclick="processStudentTC('${esc(st.id)}','${esc(st.name||'Student')}')">TC / Remove</button>
+    </div>`).join(''):'<div class="empty">No students in this class.</div>';
+  }
+  await loadRosterAddCandidates(cls,rows.map(x=>x.id));
+}
+async function loadRosterAddCandidates(cls,existingIds){
+  const el=document.getElementById('rosterAddStudent'); if(!el)return;
+  const r=await sb.from('profiles').select('id,name,class_name,role').eq('role','student').order('name');
+  if(r.error){el.innerHTML='<option value="">Unable to load students</option>';return}
+  const available=(r.data||[]).filter(s=>!existingIds.includes(s.id));
+  el.innerHTML='<option value="">Select existing student account</option>'+
+    available.map(s=>`<option value="${esc(s.id)}">${esc(s.name||s.id)}${s.class_name?' · current Class '+esc(s.class_name):' · Unassigned'}</option>`).join('');
+}
+async function addStudentToRoster(){
+  const cls=document.getElementById('teacherRosterClass')?.value;
+  const id=document.getElementById('rosterAddStudent')?.value;
+  if(!cls||!id){setStatus('rosterManageStatus','Select a student first.','error');return}
+  setStatus('rosterManageStatus','Adding student…');
+  const r=await sb.from('profiles').update({class_name:String(cls)}).eq('id',id).eq('role','student');
+  if(r.error){setStatus('rosterManageStatus',r.error.message,'error');return}
+  setStatus('rosterManageStatus','Student added to Class '+cls+'.','success');
+  await loadTeacherRoster();
+}
+async function processStudentTC(id,name){
+  const cls=document.getElementById('teacherRosterClass')?.value;
+  if(!confirm(`Process TC / remove ${name} from Class ${cls}? This will clear their class assignment.`))return;
+  setStatus('rosterManageStatus','Processing TC…');
+  const r=await sb.from('profiles').update({class_name:null}).eq('id',id).eq('role','student');
+  if(r.error){setStatus('rosterManageStatus',r.error.message,'error');return}
+  setStatus('rosterManageStatus',`${name} removed from Class ${cls}.`,'success');
+  await loadTeacherRoster();
+}
+function markAllRoster(checked){
+  document.querySelectorAll('#teacherRoster .roster-check').forEach(x=>x.checked=checked);
+}
+async function saveTeacherRosterAttendance(){
+  const cls=document.getElementById('teacherRosterClass')?.value;
+  const date=document.getElementById('teacherRosterDate')?.value||todayISO();
+  const checks=[...document.querySelectorAll('#teacherRoster .roster-check')];
+  if(!cls||!checks.length){setStatus('teacherRosterStatus','No students to save.','error');return}
+  setStatus('teacherRosterStatus','Saving attendance…');
+  const allowed=teacherAssignments.some(a=>String(a.class_name)===String(cls));
+  if(!allowed){setStatus('teacherRosterStatus','This class is not assigned to you.','error');return}
+  const payload=checks.map(c=>({
+    student_id:c.dataset.studentId,
+    attendance_date:date,
+    status:c.checked?'present':'absent',
+    marked_by:currentUser.id
+  }));
+  const r=await sb.from('attendance').upsert(payload,{onConflict:'student_id,attendance_date'});
+  if(r.error){setStatus('teacherRosterStatus',r.error.message,'error');return}
+  setStatus('teacherRosterStatus',`Attendance saved for ${payload.length} students: ${payload.filter(x=>x.status==='present').length} Present, ${payload.filter(x=>x.status==='absent').length} Absent.`,'success');
 }
 
 function askDoubt(){const q=document.getElementById('doubtText').value.trim();document.getElementById('doubtAnswer').textContent=q?'AI Edge Function connection is the next backend step; the portal UI is ready for it.':'Type your question first.'}
